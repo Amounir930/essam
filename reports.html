@@ -22,25 +22,7 @@
 
         <main>
             <section class="reports">
-                <!-- Advanced Filters -->
-                <div class="card filter-card">
-                    <div class="filter-grid">
-                        <div class="form-group">
-                            <label><i class="fas fa-calendar-alt"></i> من تاريخ</label>
-                            <input type="date" id="filterFrom">
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-calendar-alt"></i> إلى تاريخ</label>
-                            <input type="date" id="filterTo">
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-search"></i> بحث سريع</label>
-                            <input type="text" id="searchTerm" placeholder="ابحث بالمبلغ أو اليوم...">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Filter Summary (Amazon Focus) -->
+                <!-- Filter Summary (Amazon Focus) - AT THE TOP -->
                 <div class="filter-summary-cards" id="filterSummary">
                     <div class="f-card income">
                         <span class="f-label">إجمالي التحصيل</span>
@@ -56,13 +38,40 @@
                     </div>
                 </div>
 
+                <!-- Advanced Filters & Sorting -->
+                <div class="card filter-card">
+                    <div class="filter-grid">
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar-alt"></i> من</label>
+                            <input type="date" id="filterFrom">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar-alt"></i> إلى</label>
+                            <input type="date" id="filterTo">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-sort"></i> ترتيب حسب</label>
+                            <select id="sortBy">
+                                <option value="date-desc">التاريخ (الأحدث)</option>
+                                <option value="date-asc">التاريخ (الأقدم)</option>
+                                <option value="amount-desc">المبلغ (الأكثر)</option>
+                                <option value="amount-asc">المبلغ (الأقل)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label><i class="fas fa-search"></i> بحث شامل</label>
+                            <input type="text" id="searchTerm" placeholder="ابحث في التاريخ أو المبالغ...">
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Specialized Reports -->
                 <div class="report-actions-grid" style="margin-bottom: 20px;">
                     <button class="btn-secondary" id="btnEssamReport">
-                        <i class="fas fa-user-tag"></i> تقرير مصروفات عصام
+                        <i class="fas fa-user-tag"></i> تقرير عصام
                     </button>
                     <button class="btn-secondary" id="btnAmazonReport">
-                        <i class="fas fa-truck-loading"></i> تقرير التحصيل والتوريد
+                        <i class="fas fa-truck-loading"></i> تقرير أمازون
                     </button>
                 </div>
 

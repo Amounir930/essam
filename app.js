@@ -125,15 +125,30 @@ function renderDetailedReports() {
         return;
     }
 
+    // Get filter & sort values
     const fromDate = document.getElementById('filterFrom')?.value;
     const toDate = document.getElementById('filterTo')?.value;
     const search = document.getElementById('searchTerm')?.value?.toLowerCase() || '';
+    const sortBy = document.getElementById('sortBy')?.value || 'date-desc';
 
-    const filtered = records.filter(r => {
+    let filtered = records.filter(r => {
         const d = r.date;
         const matchesDate = (!fromDate || d >= fromDate) && (!toDate || d <= toDate);
-        const matchesSearch = !search || d.includes(search) || String(r.collection).includes(search);
+        const matchesSearch = !search || 
+            d.includes(search) || 
+            String(r.collection).includes(search) || 
+            String(r.supply).includes(search) || 
+            String(r.endBalance).includes(search);
         return matchesDate && matchesSearch;
+    });
+
+    // Sorting Logic
+    filtered.sort((a, b) => {
+        if (sortBy === 'date-desc') return new Date(b.date) - new Date(a.date);
+        if (sortBy === 'date-asc') return new Date(a.date) - new Date(b.date);
+        if (sortBy === 'amount-desc') return b.collection - a.collection;
+        if (sortBy === 'amount-asc') return a.collection - b.collection;
+        return 0;
     });
 
     // Amazon Focus Summary
@@ -291,6 +306,7 @@ function setupEventListeners() {
     if (document.getElementById('filterFrom')) document.getElementById('filterFrom').addEventListener('input', renderDetailedReports);
     if (document.getElementById('filterTo')) document.getElementById('filterTo').addEventListener('input', renderDetailedReports);
     if (document.getElementById('searchTerm')) document.getElementById('searchTerm').addEventListener('input', renderDetailedReports);
+    if (document.getElementById('sortBy')) document.getElementById('sortBy').addEventListener('change', renderDetailedReports);
 
     // Specialized Reports
     if (document.getElementById('btnEssamReport')) document.getElementById('btnEssamReport').addEventListener('click', window.generateEssamReport);
