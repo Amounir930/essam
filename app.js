@@ -170,18 +170,23 @@ function renderDetailedReports() {
 
     const sortedRecords = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    // Strip Layout Rendering
+    // Strip Layout (Ledger Style)
     detailedReportsList.innerHTML = sortedRecords.map((r) => {
         const index = records.indexOf(r);
         const d = new Date(r.date);
         const dateStr = d.toLocaleDateString('ar-EG', {day:'2-digit', month:'2-digit'});
+        const dayName = d.toLocaleDateString('ar-EG', {weekday:'short'});
+        const pending = r.collection - r.supply;
         
         return `
-            <div class="record-strip">
-                <div class="strip-date">${dateStr}</div>
-                <div class="strip-val"><span>التحصيل</span>${formatNumber(r.collection)}</div>
-                <div class="strip-val"><span>التوريد</span>${formatNumber(r.supply)}</div>
-                <div class="strip-val hide-mobile"><span>المتبقي</span>${formatNumber(r.collection - r.supply)}</div>
+            <div class="record-strip-ledger">
+                <div class="l-date">
+                    <span class="d-day">${dayName}</span>
+                    <span class="d-val">${dateStr}</span>
+                </div>
+                <div class="l-val positive">${formatNumber(r.collection)}</div>
+                <div class="l-val negative">${formatNumber(r.supply)}</div>
+                <div class="l-val ${pending >= 0 ? 'positive' : 'negative'}">${formatNumber(pending)}</div>
                 <div class="strip-actions">
                     <button class="btn-action edit" onclick="editRecord(${index})"><i class="fas fa-edit"></i></button>
                     <button class="btn-action delete" onclick="deleteRecord(${index})"><i class="fas fa-trash"></i></button>

@@ -540,6 +540,165 @@ main {
     .strip-val.hide-mobile { display: none; }
 }
 
+/* --- Premium Reports Overhaul --- */
+.reports-container-pro {
+    padding: 20px;
+    background: #0f111a;
+    min-height: 100vh;
+}
+
+.reports-header-summary {
+    background: linear-gradient(135deg, #1e213a 0%, #1a1c2c 100%);
+    padding: 25px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.f-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.f-card-premium {
+    text-align: center;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: transform 0.3s ease;
+}
+
+.f-card-premium:hover { transform: translateY(-5px); }
+.f-card-premium .f-label { font-size: 0.8rem; color: #8b8ea8; margin-bottom: 10px; display: block; }
+.f-card-premium .f-value { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
+
+.f-card-premium.income .f-value { color: #00f2fe; }
+.f-card-premium.supply .f-value { color: #f9d423; }
+.f-card-premium.amazon .f-value { color: #4facfe; }
+
+/* Smart Toolbar */
+.smart-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 10px;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+}
+
+.toolbar-group { display: flex; align-items: center; gap: 8px; }
+.toolbar-group input, .toolbar-group select {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.search-box { flex: 1; position: relative; }
+.search-box i { position: absolute; left: 12px; color: #8b8ea8; }
+.search-box input { width: 100%; padding-left: 35px; }
+
+.date-filters { border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px; }
+.toolbar-actions { display: flex; gap: 8px; margin-left: auto; }
+
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--primary);
+    border: none;
+    color: white;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-icon:hover { filter: brightness(1.2); transform: scale(1.05); }
+
+/* Ledger Layout */
+.ledger-header {
+    display: grid;
+    grid-template-columns: 120px 1fr 1fr 1fr 100px;
+    padding: 15px 25px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 12px 12px 0 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #8b8ea8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.ledger-body {
+    background: rgba(255,255,255,0.01);
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+}
+
+.record-strip-ledger {
+    display: grid;
+    grid-template-columns: 120px 1fr 1fr 1fr 100px;
+    align-items: center;
+    padding: 15px 25px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.2s;
+}
+
+.record-strip-ledger:hover { background: rgba(255,255,255,0.03); }
+
+.l-date { 
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.d-day { font-size: 0.7rem; color: #8b8ea8; text-transform: uppercase; }
+.d-val { font-size: 1rem; font-weight: 700; color: #4facfe; }
+
+.l-val { 
+    font-family: 'JetBrains Mono', 'Courier New', monospace; 
+    font-size: 1rem; 
+    font-weight: 700; 
+}
+
+.l-val.positive { color: #00f2fe; }
+.l-val.negative { color: #f9d423; }
+
+/* Dashboard Header refinements */
+.main-header {
+    background: #1a1c2c;
+    padding: 30px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.header-top h1 { font-size: 1.5rem; color: white; }
+
+.btn-back {
+    color: #8b8ea8;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: 0.3s;
+}
+
+.btn-back:hover { color: white; }
+
 /* Responsive */
 @media (min-width: 768px) {
     #app {

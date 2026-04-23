@@ -5,142 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>التقارير التفصيلية | Essam OS</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="reports-page">
+<body class="reports-body">
     <div id="app">
-        <header>
-            <div class="logo">
-                <i class="fas fa-chart-bar"></i>
-                <h1>التقارير التفصيلية</h1>
+        <!-- Premium Header Area -->
+        <header class="main-header">
+            <div class="header-top">
+                <a href="index.html" class="btn-back"><i class="fas fa-arrow-right"></i> العودة للرئيسية</a>
+                <h1><i class="fas fa-chart-pie"></i> مركز التقارير الذكي</h1>
             </div>
-            <a href="index.html" class="btn-text"><i class="fas fa-arrow-right"></i> العودة للرئيسية</a>
+
+            <!-- Dashboard Summaries in Header -->
+            <div class="f-summary-grid">
+                <div class="f-card-premium income">
+                    <span class="f-label">إجمالي التحصيل</span>
+                    <span class="f-value" id="fTotalCollection">0.00</span>
+                </div>
+                <div class="f-card-premium supply">
+                    <span class="f-label">إجمالي التوريد</span>
+                    <span class="f-value" id="fTotalSupply">0.00</span>
+                </div>
+                <div class="f-card-premium amazon">
+                    <span class="f-label">صافي المطابقة</span>
+                    <span class="f-value" id="fTotalAmazon">0.00</span>
+                </div>
+            </div>
         </header>
 
-        <main>
-            <section class="reports">
-                <!-- Filter Summary (Amazon Focus) - AT THE TOP -->
-                <div class="filter-summary-cards" id="filterSummary">
-                    <div class="f-card income">
-                        <span class="f-label">إجمالي التحصيل</span>
-                        <span class="f-value" id="fTotalCollection">0.00</span>
-                    </div>
-                    <div class="f-card supply">
-                        <span class="f-label">إجمالي التوريد</span>
-                        <span class="f-value" id="fTotalSupply">0.00</span>
-                    </div>
-                    <div class="f-card amazon">
-                        <span class="f-label">المتبقي لأمازون</span>
-                        <span class="f-value" id="fTotalAmazon">0.00</span>
-                    </div>
+        <main class="reports-container-pro">
+            <!-- Intelligent Control Bar -->
+            <div class="smart-toolbar">
+                <div class="toolbar-group search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchTerm" placeholder="ابحث في أي يوم أو مبلغ...">
                 </div>
-
-                <!-- Advanced Filters & Sorting -->
-                <div class="card filter-card">
-                    <div class="filter-grid">
-                        <div class="form-group">
-                            <label><i class="fas fa-calendar-alt"></i> من</label>
-                            <input type="date" id="filterFrom">
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-calendar-alt"></i> إلى</label>
-                            <input type="date" id="filterTo">
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-sort"></i> ترتيب حسب</label>
-                            <select id="sortBy">
-                                <option value="date-desc">التاريخ (الأحدث)</option>
-                                <option value="date-asc">التاريخ (الأقدم)</option>
-                                <option value="amount-desc">المبلغ (الأكثر)</option>
-                                <option value="amount-asc">المبلغ (الأقل)</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="grid-column: span 2;">
-                            <label><i class="fas fa-search"></i> بحث شامل</label>
-                            <input type="text" id="searchTerm" placeholder="ابحث في التاريخ أو المبالغ...">
-                        </div>
-                    </div>
+                <div class="toolbar-group">
+                    <select id="sortBy">
+                        <option value="date-desc">الأحدث أولاً</option>
+                        <option value="date-asc">الأقدم أولاً</option>
+                        <option value="amount-desc">الأعلى مبلغاً</option>
+                        <option value="amount-asc">الأقل مبلغاً</option>
+                    </select>
                 </div>
-
-                <!-- Specialized Reports -->
-                <div class="report-actions-grid" style="margin-bottom: 20px;">
-                    <button class="btn-secondary" id="btnEssamReport">
-                        <i class="fas fa-user-tag"></i> تقرير عصام
-                    </button>
-                    <button class="btn-secondary" id="btnAmazonReport">
-                        <i class="fas fa-truck-loading"></i> تقرير أمازون
-                    </button>
+                <div class="toolbar-group date-filters">
+                    <input type="date" id="filterFrom">
+                    <span class="sep">/</span>
+                    <input type="date" id="filterTo">
                 </div>
-
-                <div class="section-header">
-                    <h2>سجل الأيام التفصيلي</h2>
+                <div class="toolbar-actions">
+                    <button class="btn-icon" id="btnEssamReport" title="كشف حساب عصام"><i class="fas fa-user-tie"></i></button>
+                    <button class="btn-icon" id="btnAmazonReport" title="مطابقة أمازون"><i class="fas fa-box-open"></i></button>
                 </div>
-                <div class="records-container" id="detailedReportsList">
-                    <div class="no-data">جاري تحميل البيانات...</div>
-                </div>
-            </section>
-        </main>
-
-        <!-- Modals (Needed for Edit functionality) -->
-        <div id="recordModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>تعديل سجل</h3>
-                    <button class="close-modal">&times;</button>
-                </div>
-                <form id="recordForm">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>التاريخ</label>
-                            <input type="date" id="date" required>
-                        </div>
-                        <div class="form-group">
-                            <label>بداية اليوم (تلقائي)</label>
-                            <input type="number" id="startBalance" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label>التحصيل</label>
-                            <input type="number" id="collection" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>التوريد</label>
-                            <input type="number" id="supply" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>تحويل كاش</label>
-                            <input type="number" id="cash" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>اوردرات انستا</label>
-                            <input type="number" id="instaShop" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>المشتريات</label>
-                            <input type="number" id="purchases" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>مصروفات المحل</label>
-                            <input type="number" id="expenses" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>مصروفات عصام</label>
-                            <input type="number" id="essam" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>المبلغ الفعلي</label>
-                            <input type="number" id="actualAmount" value="0">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn-submit">حفظ التعديلات</button>
-                    </div>
-                </form>
             </div>
-        </div>
+
+            <!-- Professional Ledger Header -->
+            <div class="ledger-header">
+                <div class="l-col">التاريخ واليوم</div>
+                <div class="l-col">التحصيل (وارد)</div>
+                <div class="l-col">التوريد (منصرف)</div>
+                <div class="l-col">الصافي المعلق</div>
+                <div class="l-col actions">إدارة</div>
+            </div>
+
+            <!-- Ledger Body -->
+            <div class="ledger-body" id="detailedReportsList">
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>جاري مزامنة البيانات المالية...</p>
+                </div>
+            </div>
+        </main>
     </div>
+
     <script src="app.js"></script>
 </body>
 </html>
