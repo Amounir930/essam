@@ -26,7 +26,7 @@ const INITIAL_DATA = [
 
 // --- CORE STATE ---
 let records = JSON.parse(localStorage.getItem('financial_records')) || INITIAL_DATA;
-let currentReportType = ''; // 'essam' or 'amazon'
+let currentReportType = ''; 
 
 // --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -48,7 +48,6 @@ function renderDetailedReports() {
         let filtered = records.filter(r => r.date.includes(search) || String(r.collection).includes(search));
         filtered.sort((a, b) => (sortBy === 'date-desc' ? new Date(b.date) - new Date(a.date) : new Date(a.date) - new Date(b.date)));
 
-        // Updates Summaries
         const tColl = filtered.reduce((s, r) => s + r.collection, 0);
         const tSupp = filtered.reduce((s, r) => s + r.supply, 0);
         document.getElementById('fTotalCollection').innerText = formatNumber(tColl);
@@ -143,21 +142,17 @@ window.deleteRecord = (idx) => { if(confirm('Delete?')){ records.splice(idx,1); 
 document.getElementById('btnSyncGithub').onclick = async () => {
     const btn = document.getElementById('btnSyncGithub');
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    
-    // Prepare Data (Amazon Logic)
     let csv = "sep=;\nDate;Day;Collection;Supply;Net\n";
     records.forEach(r => {
         csv += `${r.date};${new Date(r.date).toLocaleDateString('en-US',{weekday:'short'})};${r.collection};${r.supply};${r.collection-r.supply}\n`;
     });
-
     const filename = `Supply_Reports/Report_${new Date().toISOString().split('T')[0]}.csv`;
     const success = await pushToGitHub(csv, filename);
-    
     if (success) {
-        alert('تم الحفظ بنجاح في GitHub!');
+        alert('تم الحفظ في GitHub!');
         btn.innerHTML = '<i class="fas fa-check" style="color:var(--success)"></i>';
     } else {
-        alert('خطأ في الاتصال بـ GitHub');
+        alert('خطأ');
         btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i>';
     }
 };
@@ -169,7 +164,7 @@ async function pushToGitHub(content, path) {
             method: 'PUT',
             headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                message: `Update Financial Report ${path}`,
+                message: `Update ${path}`,
                 content: btoa(unescape(encodeURIComponent(content))),
                 branch: GITHUB_CONFIG.branch
             })
@@ -180,36 +175,35 @@ async function pushToGitHub(content, path) {
 
 // --- EXPORT ---
 window.exportReport = async (format) => {
+    const list = document.getElementById('detailedReportsList');
     const from = document.getElementById('repFrom').value;
     const to = document.getElementById('repTo').value;
     const filtered = records.filter(r => (!from || r.date >= from) && (!to || r.date <= to));
 
     if (format === 'pdf') {
-        // PRE-PRINT PREP: Temporary Filter for PDF
-        const originalListHTML = list.innerHTML;
-        const originalHeaderHTML = document.querySelector('.ledger-header').innerHTML;
         const header = document.querySelector('.ledger-header');
+        const originalHeader = header.innerHTML;
+        const originalBody = list.innerHTML;
         
         if (currentReportType === 'essam') {
-            const essamData = filtered.filter(r => r.essam > 0);
-            header.innerHTML = '<div>Date / Day</div><div>Essam Withdrawals</div>';
+            const data = filtered.filter(r => r.essam > 0);
+            header.innerHTML = '<div>Date</div><div>Essam Expenses</div>';
             header.style.gridTemplateColumns = '1fr 1fr';
-            list.innerHTML = essamData.map(r => `
+            list.innerHTML = data.map(r => `
                 <div class="ledger-row-premium" style="grid-template-columns: 1fr 1fr">
-                    <div class="col-date"><strong>${r.date}</strong></div>
-                    <div class="col-val income">${formatNumber(r.essam)}</div>
+                    <div>${r.date}</div>
+                    <div style="text-align:center;color:#00f2fe"><strong>${formatNumber(r.essam)}</strong></div>
                 </div>
-            `).join('') + `<div class="ledger-row-premium" style="grid-template-columns: 1fr 1fr"><div><strong>Total</strong></div><div class="income"><strong>${formatNumber(essamData.reduce((s,r)=>s+r.essam,0))}</strong></div></div>`;
+            `).join('') + `<div class="ledger-row-premium" style="grid-template-columns: 1fr 1fr"><div><strong>Total</strong></div><div style="text-align:center"><strong>${formatNumber(data.reduce((s,r)=>s+r.essam,0))}</strong></div></div>`;
         } else {
-            const amazonData = filtered;
-            header.innerHTML = '<div>Date / Day</div><div>Collection</div><div>Supply</div><div>Net</div>';
+            header.innerHTML = '<div>Date</div><div>Coll</div><div>Supp</div><div>Net</div>';
             header.style.gridTemplateColumns = '1fr 1fr 1fr 1fr';
-            list.innerHTML = amazonData.map(r => `
+            list.innerHTML = filtered.map(r => `
                 <div class="ledger-row-premium" style="grid-template-columns: 1fr 1fr 1fr 1fr">
-                    <div class="col-date"><strong>${r.date}</strong></div>
-                    <div class="col-val income">${formatNumber(r.collection)}</div>
-                    <div class="col-val expense">${formatNumber(r.supply)}</div>
-                    <div class="col-val">${formatNumber(r.collection-r.supply)}</div>
+                    <div>${r.date}</div>
+                    <div style="text-align:center">${formatNumber(r.collection)}</div>
+                    <div style="text-align:center">${formatNumber(r.supply)}</div>
+                    <div style="text-align:center">${formatNumber(r.collection-r.supply)}</div>
                 </div>
             `).join('');
         }
@@ -217,14 +211,11 @@ window.exportReport = async (format) => {
         closeReportModal();
         setTimeout(() => {
             window.print();
-            // RESTORE ORIGINAL VIEW
-            header.innerHTML = originalHeaderHTML;
+            header.innerHTML = originalHeader;
             header.style.gridTemplateColumns = '';
             renderDetailedReports();
-        }, 300);
-        
+        }, 800);
     } else {
-        // Excel logic remains the same but with clear English headers
         let csv = "sep=;\n";
         if (currentReportType === 'essam') {
             csv += "Date;Day;Amount\n";
@@ -243,5 +234,4 @@ function formatNumber(n) { return Number(n).toLocaleString('en-US', {minimumFrac
 function setupEventListeners() {
     document.getElementById('searchTerm').oninput = renderDetailedReports;
     document.getElementById('sortBy').onchange = renderDetailedReports;
-    document.getElementById('navSettings').onclick = () => document.getElementById('settingsModal').classList.add('active');
 }
