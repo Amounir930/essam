@@ -3,7 +3,38 @@
 // --- Constants & State ---
 const STORAGE_KEY = 'essam_os_records';
 const SETTINGS_KEY = 'essam_os_settings';
-let records = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+const INITIAL_RECORDS = [
+    { date: '2026-04-01', startBalance: 640, collection: 12160, supply: 0, cash: 2170, instaShop: 1685, purchases: 364, expenses: 406, essam: 0, actualAmount: 11545, endBalance: 11545, diff: 0 },
+    { date: '2026-04-02', startBalance: 11545, collection: 5370, supply: 15600, cash: 740, instaShop: 0, purchases: 0, expenses: 250, essam: 0, actualAmount: 325, endBalance: 325, diff: 0 },
+    { date: '2026-04-03', startBalance: 325, collection: 11110, supply: 0, cash: 1665, instaShop: 465, purchases: 660, expenses: 150, essam: 0, actualAmount: 9425, endBalance: 9425, diff: 0 },
+    { date: '2026-04-04', startBalance: 9425, collection: 18280, supply: 8500, cash: 295, instaShop: 890, purchases: 660, expenses: 150, essam: 0, actualAmount: 18990, endBalance: 18990, diff: 0 },
+    { date: '2026-04-05', startBalance: 18990, collection: 9495, supply: 18000, cash: 0, instaShop: 1055, purchases: 865, expenses: 150, essam: 0, actualAmount: 10525, endBalance: 10525, diff: 0 },
+    { date: '2026-04-06', startBalance: 10525, collection: 14630, supply: 9500, cash: 1050, instaShop: 195, purchases: 150, expenses: 350, essam: 0, actualAmount: 14300, endBalance: 14300, diff: 0 },
+    { date: '2026-04-07', startBalance: 14300, collection: 15430, supply: 13000, cash: 3175, instaShop: 70, purchases: 80, expenses: 150, essam: 0, actualAmount: 13395, endBalance: 13395, diff: 0 },
+    { date: '2026-04-08', startBalance: 13395, collection: 21070, supply: 11500, cash: 5085, instaShop: 160, purchases: 1145, expenses: 150, essam: 0, actualAmount: 16745, endBalance: 16745, diff: 0 },
+    { date: '2026-04-09', startBalance: 16745, collection: 14580, supply: 15000, cash: 4135, instaShop: 0, purchases: 0, expenses: 150, essam: 0, actualAmount: 12040, endBalance: 12040, diff: 0 },
+    { date: '2026-04-10', startBalance: 12040, collection: 12720, supply: 0, cash: 0, instaShop: 0, purchases: 815, expenses: 150, essam: 495, actualAmount: 23300, endBalance: 23300, diff: 0 },
+    { date: '2026-04-11', startBalance: 23795, collection: 0, supply: 20000, cash: 0, instaShop: 0, purchases: 0, expenses: 0, essam: 0, actualAmount: 3795, endBalance: 3795, diff: 0 },
+    { date: '2026-04-12', startBalance: 3795, collection: 12175, supply: 0, cash: 0, instaShop: 160, purchases: 115, expenses: 550, essam: 0, actualAmount: 15465, endBalance: 15465, diff: 0 },
+    { date: '2026-04-13', startBalance: 15465, collection: 14695, supply: 13000, cash: 735, instaShop: 30, purchases: 140, expenses: 150, essam: 0, actualAmount: 16165, endBalance: 16165, diff: 0 },
+    { date: '2026-04-14', startBalance: 16165, collection: 16710, supply: 0, cash: 1265, instaShop: 1505, purchases: 1915, expenses: 150, essam: 0, actualAmount: 31050, endBalance: 31050, diff: 0 },
+    { date: '2026-04-15', startBalance: 31050, collection: 12320, supply: 24850, cash: 5760, instaShop: 300, purchases: 450, expenses: 665, essam: 0, actualAmount: 11945, endBalance: 11945, diff: 0 },
+    { date: '2026-04-16', startBalance: 11945, collection: 0, supply: 0, cash: 10490, instaShop: 0, purchases: 0, expenses: 0, essam: 0, actualAmount: 1455, endBalance: 1455, diff: 0 },
+    { date: '2026-04-17', startBalance: 1455, collection: 10860, supply: 10000, cash: 0, instaShop: 0, purchases: 55, expenses: 350, essam: 0, actualAmount: 1910, endBalance: 1910, diff: 0 },
+    { date: '2026-04-18', startBalance: 1910, collection: 12320, supply: 0, cash: 2735, instaShop: 130, purchases: 715, expenses: 295, essam: 0, actualAmount: 10615, endBalance: 10615, diff: 0 },
+    { date: '2026-04-19', startBalance: 10615, collection: 9480, supply: 9000, cash: 0, instaShop: 0, purchases: 100, expenses: 150, essam: 0, actualAmount: 10845, endBalance: 10845, diff: 0 },
+    { date: '2026-04-20', startBalance: 10845, collection: 15460, supply: 0, cash: 9250, instaShop: 4665, purchases: 1440, expenses: 150, essam: 0, actualAmount: 20130, endBalance: 20130, diff: 0 },
+    { date: '2026-04-21', startBalance: 20130, collection: 16385, supply: 7000, cash: 25310, instaShop: 0, purchases: 0, expenses: 350, essam: 0, actualAmount: 3855, endBalance: 3855, diff: 0 },
+    { date: '2026-04-22', startBalance: 3855, collection: 9050, supply: 10000, cash: 780, instaShop: 105, purchases: 0, expenses: 150, essam: 0, actualAmount: 2080, endBalance: 2080, diff: 0 }
+];
+
+let records = JSON.parse(localStorage.getItem(STORAGE_KEY));
+if (!records || records.length === 0) {
+    records = INITIAL_RECORDS;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+}
+
 let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || { token: '', repo: 'Amounir930/essam' };
 let editIndex = -1;
 
