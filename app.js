@@ -56,22 +56,27 @@ function renderAll() {
     let filtered = records.filter(r => r.date.includes(search) || String(r.collection).includes(search));
     filtered.sort((a, b) => (sortBy === 'date-desc' ? new Date(b.date) - new Date(a.date) : new Date(a.date) - new Date(b.date)));
 
-    const tColl = filtered.reduce((s, r) => s + r.collection, 0);
-    const tSupp = filtered.reduce((s, r) => s + r.supply, 0);
-    document.getElementById('fTotalCollection').innerText = formatNumber(tColl);
-    document.getElementById('fTotalSupply').innerText = formatNumber(tSupp);
-    document.getElementById('fTotalAmazon').innerText = formatNumber(tColl - tSupp);
+    document.getElementById('fTotalCollection').innerText = formatNumber(filtered.reduce((s, r) => s + r.collection, 0));
+    document.getElementById('fTotalSupply').innerText = formatNumber(filtered.reduce((s, r) => s + r.supply, 0));
+    document.getElementById('fTotalAmazon').innerText = formatNumber(filtered.reduce((s, r) => s + (r.collection - r.supply), 0));
 
     list.innerHTML = filtered.map((r) => {
         const idx = records.indexOf(r);
+        const invoiceLink = r.invoiceUrl ? `<a href="${r.invoiceUrl}" target="_blank" class="btn-icon" title="الفاتورة"><i class="fas fa-paperclip"></i></a>` : '';
         return `
             <tr>
-                <td><strong>${r.date}</strong><br><small>${new Date(r.date).toLocaleDateString('ar-EG',{weekday:'short'})}</small></td>
-                <td class="val" style="color:var(--success)">${formatNumber(r.collection)}</td>
-                <td class="val" style="color:var(--danger)">${formatNumber(r.supply)}</td>
+                <td><strong>${r.date}</strong></td>
+                <td class="val pos">${formatNumber(r.collection)}</td>
+                <td class="val neg">${formatNumber(r.supply)}</td>
                 <td class="val">${formatNumber(r.collection-r.supply)}</td>
-                <td><span class="status-tag ${r.diff >= 0 ? 'pos' : 'neg'}">${r.diff >= 0 ? 'مطابق' : 'عجز'}</span></td>
+                <td class="val">${formatNumber(r.instaShop)}</td>
+                <td class="val">${formatNumber(r.cash)}</td>
+                <td class="val">${formatNumber(r.purchases)}</td>
+                <td class="val">${formatNumber(r.expenses)}</td>
+                <td class="val">${formatNumber(r.essam)}</td>
+                <td class="val" style="font-weight:bold">${formatNumber(r.actualAmount)}</td>
                 <td class="actions">
+                    ${invoiceLink}
                     <button onclick="editRecord(${idx})" class="btn-icon" title="تعديل"><i class="fas fa-edit"></i></button>
                     <button onclick="deleteRecord(${idx})" class="btn-icon delete" title="حذف"><i class="fas fa-trash"></i></button>
                 </td>
@@ -167,7 +172,8 @@ async function handleFileUpload(file) {
     const reader = new FileReader();
     reader.onload = async () => {
         const base64 = reader.result.split(',')[1];
-        const path = `Invoices/INV_${Date.now()}_${file.name}`;
+        const safeName = file.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
+        const path = `Invoices/INV_${Date.now()}_${safeName}`;
         const success = await pushToGitHub(base64, path);
         if (success) {
             document.getElementById('invoiceUrl').value = `https://github.com/${GITHUB_CONFIG.repo}/blob/${GITHUB_CONFIG.branch}/${path}?raw=true`;
@@ -185,7 +191,11 @@ async function pushToGitHub(content, path) {
     try {
         const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${path}`, {
             method: 'PUT',
-            headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+            headers: { 
+                'Authorization': `Bearer ${GITHUB_CONFIG.token}`, 
+                'Accept': 'application/vnd.github.v3+json', 
+                'Content-Type': 'application/json' 
+            },
             body: JSON.stringify({ message: `Upload ${path}`, content, branch: GITHUB_CONFIG.branch })
         });
         return response.ok;
@@ -214,24 +224,61 @@ window.exportReport = (format) => {
     const filtered = records.filter(r => r.date >= from && r.date <= to);
     if (format === 'pdf') {
         const printContainer = document.getElementById('printTemplate');
-        let rows = ""; let tColl = 0, tSupp = 0;
+        let rows = "";
+        let totals = { col:0, sup:0, net:0, ins:0, csh:0, pur:0, exp:0, esm:0, act:0 };
+        
         filtered.forEach(r => {
-            rows += `<tr><td>${r.date}</td><td class="val">${formatNumber(r.collection)}</td><td class="val">${formatNumber(r.supply)}</td><td class="val">${formatNumber(r.collection-r.supply)}</td></tr>`;
-            tColl += r.collection; tSupp += r.supply;
+            const net = r.collection - r.supply;
+            rows += `<tr>
+                <td>${r.date}</td>
+                <td class="val">${formatNumber(r.collection)}</td>
+                <td class="val">${formatNumber(r.supply)}</td>
+                <td class="val">${formatNumber(net)}</td>
+                <td class="val">${formatNumber(r.instaShop)}</td>
+                <td class="val">${formatNumber(r.cash)}</td>
+                <td class="val">${formatNumber(r.purchases)}</td>
+                <td class="val">${formatNumber(r.expenses)}</td>
+                <td class="val">${formatNumber(r.essam)}</td>
+                <td class="val">${formatNumber(r.actualAmount)}</td>
+            </tr>`;
+            totals.col += r.collection; totals.sup += r.supply; totals.net += net;
+            totals.ins += r.instaShop; totals.csh += r.cash; totals.pur += r.purchases;
+            totals.exp += r.expenses; totals.esm += r.essam; totals.act += r.actualAmount;
         });
+        
         printContainer.innerHTML = `
-            <div style="text-align:center; margin-bottom:30px;"><h1>تقرير العمليات المالية</h1><p>من ${from} إلى ${to}</p></div>
-            <table class="data-table">
-                <thead><tr><th>التاريخ</th><th>التحصيل</th><th>التوريد</th><th>الصافي</th></tr></thead>
+            <div style="text-align:center; margin-bottom:20px;">
+                <h1>تقرير العمليات المالية التفصيلي</h1>
+                <p>الفترة: من ${from} إلى ${to}</p>
+            </div>
+            <table class="data-table" style="font-size: 8pt;">
+                <thead>
+                    <tr>
+                        <th>التاريخ</th><th>تحصيل</th><th>توريد</th><th>صافي</th><th>انستا</th><th>كاش</th><th>شراء</th><th>مصروف</th><th>عصام</th><th>فعلي</th>
+                    </tr>
+                </thead>
                 <tbody>${rows}</tbody>
-                <tfoot><tr style="background:#eee; font-weight:bold;"><td>الإجماليات</td><td>${formatNumber(tColl)}</td><td>${formatNumber(tSupp)}</td><td>${formatNumber(tColl-tSupp)}</td></tr></tfoot>
+                <tfoot>
+                    <tr style="background:#f1f5f9; font-weight:bold;">
+                        <td>الإجماليات</td>
+                        <td>${formatNumber(totals.col)}</td>
+                        <td>${formatNumber(totals.sup)}</td>
+                        <td>${formatNumber(totals.net)}</td>
+                        <td>${formatNumber(totals.ins)}</td>
+                        <td>${formatNumber(totals.csh)}</td>
+                        <td>${formatNumber(totals.pur)}</td>
+                        <td>${formatNumber(totals.exp)}</td>
+                        <td>${formatNumber(totals.esm)}</td>
+                        <td>${formatNumber(totals.act)}</td>
+                    </tr>
+                </tfoot>
             </table>
         `;
         closeReportModal(); setTimeout(() => { window.print(); printContainer.innerHTML = ''; }, 500);
     } else {
-        let csv = "sep=;\nDate;Collection;Supply;Net\n";
-        filtered.forEach(r => csv += `${r.date};${r.collection};${r.supply};${r.collection-r.supply}\n`);
-        const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\uFEFF"+csv], {type:'text/csv;charset=utf-8;'})); a.download = `report_${Date.now()}.csv`; a.click();
+        let csv = "sep=;\nDate;Collection;Supply;Net;Insta;Cash;Purchases;Expenses;Essam;Actual\n";
+        filtered.forEach(r => csv += `${r.date};${r.collection};${r.supply};${r.collection-r.supply};${r.instaShop};${r.cash};${r.purchases};${r.expenses};${r.essam};${r.actualAmount}\n`);
+        const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\uFEFF"+csv], {type:'text/csv;charset=utf-8;'})); a.download = `detailed_report_${Date.now()}.csv`; a.click();
         closeReportModal();
     }
 };
