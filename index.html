@@ -3,174 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financial OS | Command Center</title>
-    <link rel="stylesheet" href="css/theme.css">
-    <link rel="stylesheet" href="css/dashboard_new.css">
-    <link rel="stylesheet" href="css/modals.css">
-    <link rel="stylesheet" href="css/print.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Essam Financial OS | Enterprise</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="app-shell">
-        <aside class="sidebar">
-            <div class="logo">
-                <div class="logo-icon"><i class="fas fa-vault"></i></div>
-                <span>Financial OS</span>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="app-sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-shield-halved"></i>
+                <span>Commander OS</span>
             </div>
-            <nav class="side-nav">
-                <a href="#" class="active"><i class="fas fa-chart-line"></i> لوحة التحكم</a>
-                <a href="#" onclick="openReportModal('amazon')"><i class="fas fa-file-invoice-dollar"></i> تقارير التوريد</a>
-                <a href="#" onclick="openReportModal('essam')"><i class="fas fa-user-tag"></i> مصروفات عصام</a>
+            <nav class="sidebar-nav">
+                <button class="nav-item active"><i class="fas fa-grid-2"></i> لوحة التحكم</button>
+                <button class="nav-item" onclick="openReportModal('amazon')"><i class="fas fa-truck-loading"></i> توريد أمازون</button>
+                <button class="nav-item" onclick="openReportModal('essam')"><i class="fas fa-user-gear"></i> مصروفات عصام</button>
             </nav>
-            <div class="sidebar-footer">
-                <button id="themeToggle" class="theme-btn">
-                    <i class="fas fa-moon"></i>
+            <div class="sidebar-actions">
+                <button id="themeToggle" class="btn-icon-text">
+                    <i class="fas fa-circle-half-stroke"></i>
                     <span>الوضع الليلي</span>
                 </button>
             </div>
         </aside>
 
-        <main class="main-content">
-            <header class="top-bar">
-                <div class="search-wrapper">
+        <!-- Main Content -->
+        <main class="app-main">
+            <header class="app-header">
+                <div class="header-search">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="searchTerm" placeholder="البحث في العمليات أو التواريخ...">
+                    <input type="text" id="searchTerm" placeholder="بحث سريع في السجلات...">
                 </div>
-                <div class="top-actions">
-                    <button class="btn-sync" id="btnSyncGithub" title="Sync to Cloud">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <span>مزامنة السحابة</span>
-                    </button>
-                    <button class="btn-primary" onclick="openAddModal()">
-                        <i class="fas fa-plus"></i>
-                        <span>سجل جديد</span>
-                    </button>
+                <div class="header-actions">
+                    <button class="btn-sync" id="btnSyncGithub"><i class="fas fa-cloud-arrow-up"></i> مزامنة</button>
+                    <button class="btn-primary" onclick="openAddModal()"><i class="fas fa-plus-circle"></i> سجل جديد</button>
                 </div>
             </header>
 
-            <div class="dashboard-grid">
-                <!-- Summary Section -->
-                <section class="summary-section">
-                    <div class="stat-card">
-                        <div class="stat-icon income"><i class="fas fa-arrow-trend-up"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-label">إجمالي التحصيل</span>
-                            <h3 id="fTotalCollection">0.00</h3>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon expense"><i class="fas fa-arrow-trend-down"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-label">إجمالي التوريد</span>
-                            <h3 id="fTotalSupply">0.00</h3>
-                        </div>
-                    </div>
-                    <div class="stat-card highlight">
-                        <div class="stat-icon balance"><i class="fas fa-scale-balanced"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-label">صافي المطابقة</span>
-                            <h3 id="fTotalAmazon">0.00</h3>
-                        </div>
-                    </div>
-                </section>
+            <div class="stats-grid">
+                <div class="stat-card income">
+                    <label>التحصيل</label>
+                    <h2 id="fTotalCollection">0.00</h2>
+                </div>
+                <div class="stat-card expense">
+                    <label>التوريد</label>
+                    <h2 id="fTotalSupply">0.00</h2>
+                </div>
+                <div class="stat-card balance">
+                    <label>الصافي</label>
+                    <h2 id="fTotalAmazon">0.00</h2>
+                </div>
+            </div>
 
-                <!-- Data Table Section -->
-                <section class="table-section">
-                    <div class="table-card">
-                        <div class="table-header">
-                            <h2>سجل العمليات المالية</h2>
-                            <div class="table-filters">
-                                <select id="sortBy">
-                                    <option value="date-desc">الأحدث أولاً</option>
-                                    <option value="date-asc">الأقدم أولاً</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="financial-table">
-                                <thead>
-                                    <tr>
-                                        <th>التاريخ</th>
-                                        <th class="text-center">التحصيل</th>
-                                        <th class="text-center">التوريد</th>
-                                        <th class="text-center">الصافي</th>
-                                        <th class="text-center">الحالة</th>
-                                        <th class="text-right">الإجراءات</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="detailedReportsList">
-                                    <!-- Dynamic Content -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
+            <div class="ledger-container">
+                <div class="ledger-header">
+                    <h2>العمليات المالية</h2>
+                    <select id="sortBy" class="select-minimal">
+                        <option value="date-desc">الأحدث أولاً</option>
+                        <option value="date-asc">الأقدم أولاً</option>
+                    </select>
+                </div>
+                <div class="ledger-scroll">
+                    <table class="data-table" id="mainTable">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th class="val">التحصيل</th>
+                                <th class="val">التوريد</th>
+                                <th class="val">الصافي</th>
+                                <th>الحالة</th>
+                                <th class="actions">إدارة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailedReportsList"></tbody>
+                    </table>
+                </div>
             </div>
         </main>
     </div>
 
-    <!-- Modals (Kept structure but will restyle) -->
-    <div id="recordModal" class="modal">
-        <div class="modal-content">
+    <!-- Modals -->
+    <div id="recordModal" class="modal-overlay">
+        <div class="modal-card">
             <div class="modal-header">
-                <h3>تحرير بيانات السجل</h3>
-                <button class="close-modal" onclick="closeAddModal()">&times;</button>
+                <h3>إدارة البيانات المالية</h3>
+                <button onclick="closeAddModal()">&times;</button>
             </div>
-            <form id="recordForm" class="modern-form">
+            <form id="recordForm" class="modal-form">
                 <input type="hidden" id="recordIndex">
-                <div class="form-row">
-                    <div class="form-group"><label>التاريخ</label><input type="date" id="date" required></div>
+                <div class="grid-2">
+                    <div class="field"><label>التاريخ</label><input type="date" id="date" required></div>
+                    <div class="field"><label>الفعلي بالخزنة</label><input type="number" id="actualAmount" value="0"></div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group"><label>التحصيل</label><input type="number" id="collection" value="0"></div>
-                    <div class="form-group"><label>توريد أمازون</label><input type="number" id="supply" value="0"></div>
+                <div class="grid-2">
+                    <div class="field"><label>التحصيل (+)</label><input type="number" id="collection" value="0"></div>
+                    <div class="field"><label>انستا (+)</label><input type="number" id="instaShop" value="0"></div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group"><label>انستا</label><input type="number" id="instaShop" value="0"></div>
-                    <div class="form-group"><label>كاش</label><input type="number" id="cash" value="0"></div>
+                <div class="grid-2">
+                    <div class="field"><label>التوريد (-)</label><input type="number" id="supply" value="0"></div>
+                    <div class="field"><label>الكاش (-)</label><input type="number" id="cash" value="0"></div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group"><label>مشتريات</label><input type="number" id="purchases" value="0"></div>
-                    <div class="form-group"><label>مصروف محل</label><input type="number" id="expenses" value="0"></div>
+                <div class="grid-2">
+                    <div class="field"><label>المشتريات (-)</label><input type="number" id="purchases" value="0"></div>
+                    <div class="field"><label>مصروف المحل (-)</label><input type="number" id="expenses" value="0"></div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group"><label>مصروف عصام</label><input type="number" id="essam" value="0"></div>
-                    <div class="form-group"><label>الفعلي بالخزنة</label><input type="number" id="actualAmount" value="0"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group" style="grid-column: span 2;">
-                        <label><i class="fas fa-paperclip"></i> إرفاق فاتورة التوريد (صورة/PDF)</label>
-                        <input type="file" id="invoiceFile" accept="image/*,.pdf" style="padding: 8px;">
+                <div class="field full"><label>مصروف عصام (-)</label><input type="number" id="essam" value="0"></div>
+                
+                <div class="field full">
+                    <label>أرشفة الفاتورة</label>
+                    <div class="upload-zone" id="uploadZone">
+                        <i class="fas fa-file-arrow-up"></i>
+                        <span>اسحب الملف هنا أو اضغط للرفع</span>
+                        <input type="file" id="invoiceFile" accept="image/*,.pdf" hidden>
                         <input type="hidden" id="invoiceUrl">
                     </div>
+                    <div id="uploadStatus" class="upload-status"></div>
                 </div>
-                <div class="form-footer">
-                    <button type="submit" class="btn-primary full-width">حفظ البيانات</button>
+                
+                <div class="modal-footer">
+                    <button type="submit" class="btn-primary-full">تأكيد وحفظ السجل</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Report Modal -->
-    <div id="reportModal" class="modal">
-        <div class="modal-content narrow">
-            <div class="modal-header">
-                <h3 id="repTitle">استخراج تقرير</h3>
-                <button class="close-modal" onclick="closeReportModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group"><label>من تاريخ</label><input type="date" id="repFrom"></div>
-                <div class="form-group"><label>إلى تاريخ</label><input type="date" id="repTo"></div>
-                <div class="report-actions">
-                    <button class="btn-secondary" onclick="exportReport('excel')"><i class="fas fa-file-excel"></i> Excel</button>
-                    <button class="btn-primary" onclick="exportReport('pdf')"><i class="fas fa-file-pdf"></i> PDF Report</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
 
-    <div id="printTemplate"></div>
+    <!-- Print Template (Hidden) -->
+    <div id="printTemplate" class="print-only"></div>
 
     <script src="config.js"></script>
     <script src="app.js"></script>
