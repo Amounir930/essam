@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Essam Financial OS | الرئيسية</title>
-    <!-- Modular CSS -->
     <link rel="stylesheet" href="css/vars.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/modals.css">
@@ -13,14 +12,14 @@
 </head>
 <body>
     <div id="app">
-        <!-- Main Header -->
         <header class="main-header">
             <div class="header-top">
                 <h1><i class="fas fa-wallet"></i> نظام عصام المالي</h1>
-                <button class="btn-action" id="navSettings"><i class="fas fa-cog"></i></button>
+                <div class="header-actions">
+                    <button class="btn-action" id="navSettings"><i class="fas fa-key"></i></button>
+                </div>
             </div>
 
-            <!-- Financial Summary -->
             <div class="f-summary-grid">
                 <div class="f-card-premium income">
                     <span class="f-label">إجمالي التحصيل</span>
@@ -31,32 +30,30 @@
                     <span class="f-value" id="fTotalSupply">0.00</span>
                 </div>
                 <div class="f-card-premium amazon">
-                    <span class="f-label">الصافي المعلق</span>
+                    <span class="f-label">صافي المطابقة</span>
                     <span class="f-value" id="fTotalAmazon">0.00</span>
                 </div>
             </div>
         </header>
 
-        <!-- Intelligent Control Bar -->
         <div class="smart-toolbar">
             <div class="search-box">
                 <i class="fas fa-search"></i>
-                <input type="text" id="searchTerm" placeholder="بحث سريع بالمبلغ أو التاريخ...">
+                <input type="text" id="searchTerm" placeholder="بحث شامل...">
             </div>
             <div class="toolbar-group">
                 <select id="sortBy">
                     <option value="date-desc">الأحدث</option>
                     <option value="date-asc">الأقدم</option>
-                    <option value="amount-desc">الأعلى</option>
                 </select>
             </div>
             <div class="toolbar-actions">
-                <button class="btn-action" id="btnEssamReport"><i class="fas fa-user-tie"></i></button>
-                <button class="btn-action" id="btnAmazonReport"><i class="fas fa-truck"></i></button>
+                <button class="btn-action" onclick="openReportModal('essam')" title="تقرير عصام"><i class="fas fa-user-tie"></i></button>
+                <button class="btn-action" onclick="openReportModal('amazon')" title="تقرير أمازون"><i class="fas fa-truck"></i></button>
+                <button class="btn-action pulse" id="btnSyncGithub" title="حفظ التوريدات للسحابة"><i class="fas fa-cloud-upload-alt" style="color:#00f2fe"></i></button>
             </div>
         </div>
 
-        <!-- Ledger Table -->
         <div class="ledger-header">
             <div>التاريخ واليوم</div>
             <div style="text-align:center">التحصيل (وارد)</div>
@@ -65,112 +62,55 @@
             <div style="text-align:center">عجز / زيادة</div>
             <div style="text-align:right">إدارة</div>
         </div>
-        <div class="ledger-body" id="detailedReportsList">
-            <div class="loading-state">جاري التحميل...</div>
-        </div>
+        <div class="ledger-body" id="detailedReportsList"></div>
 
-        <!-- Floating Add Button -->
         <div class="fab" onclick="openAddModal()">
             <i class="fas fa-plus"></i>
         </div>
 
-        <!-- Modal: Add Record -->
+        <!-- Add Modal -->
         <div id="recordModal" class="modal">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h3 id="modalTitle">إضافة سجل جديد</h3>
-                    <button class="close-modal" onclick="closeAddModal()">&times;</button>
-                </div>
+                <div class="modal-header"><h3>إضافة سجل</h3><button class="close-modal" onclick="closeAddModal()">&times;</button></div>
                 <form id="recordForm" class="form-grid">
                     <input type="hidden" id="recordIndex">
-                    <div class="form-group">
-                        <label>التاريخ</label>
-                        <input type="date" id="date" required>
+                    <div class="form-group"><label>التاريخ</label><input type="date" id="date" required></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <div class="form-group"><label>التحصيل (+)</label><input type="number" id="collection" value="0"></div>
+                        <div class="form-group"><label>انستا (+)</label><input type="number" id="instaShop" value="0"></div>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group">
-                            <label>التحصيل (+)</label>
-                            <input type="number" id="collection" value="0" step="0.01">
-                        </div>
-                        <div class="form-group">
-                            <label>أوردرات انستا (+)</label>
-                            <input type="number" id="instaShop" value="0" step="0.01">
-                        </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <div class="form-group"><label>توريد (-)</label><input type="number" id="supply" value="0"></div>
+                        <div class="form-group"><label>كاش (-)</label><input type="number" id="cash" value="0"></div>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group">
-                            <label>التوريد (-)</label>
-                            <input type="number" id="supply" value="0" step="0.01">
-                        </div>
-                        <div class="form-group">
-                            <label>تحويل كاش (-)</label>
-                            <input type="number" id="cash" value="0" step="0.01">
-                        </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <div class="form-group"><label>مشتريات (-)</label><input type="number" id="purchases" value="0"></div>
+                        <div class="form-group"><label>محل (-)</label><input type="number" id="expenses" value="0"></div>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group">
-                            <label>مشتريات (-)</label>
-                            <input type="number" id="purchases" value="0" step="0.01">
-                        </div>
-                        <div class="form-group">
-                            <label>مصروفات محل (-)</label>
-                            <input type="number" id="expenses" value="0" step="0.01">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>مصروفات عصام (-)</label>
-                        <input type="number" id="essam" value="0" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label>المبلغ الفعلي في الخزنة</label>
-                        <input type="number" id="actualAmount" value="0" step="0.01">
-                    </div>
-                    
-                    <button type="submit" class="btn-submit">حفظ السجل</button>
+                    <div class="form-group"><label>عصام (-)</label><input type="number" id="essam" value="0"></div>
+                    <div class="form-group"><label>الفعلي بالخزنة</label><input type="number" id="actualAmount" value="0"></div>
+                    <button type="submit" class="btn-submit">حفظ</button>
                 </form>
             </div>
         </div>
 
-        <!-- Modal: Export Selection -->
-        <div id="exportModal" class="modal">
-            <div class="modal-content" style="max-width: 350px;">
-                <div class="modal-header">
-                    <h3 id="exportTitle">تصدير تقرير</h3>
-                    <button class="close-modal" onclick="closeExportModal()">&times;</button>
-                </div>
+        <!-- Report Modal -->
+        <div id="reportModal" class="modal">
+            <div class="modal-content" style="max-width:350px">
+                <div class="modal-header"><h3 id="repTitle">تقرير</h3><button class="close-modal" onclick="closeReportModal()">&times;</button></div>
                 <div class="form-grid">
-                    <div class="form-group">
-                        <label>من تاريخ</label>
-                        <input type="date" id="expFrom">
-                    </div>
-                    <div class="form-group">
-                        <label>إلى تاريخ</label>
-                        <input type="date" id="expTo">
-                    </div>
+                    <div class="form-group"><label>من</label><input type="date" id="repFrom"></div>
+                    <div class="form-group"><label>إلى</label><input type="date" id="repTo"></div>
                     <div class="report-options">
-                        <button class="btn-report" id="btnExcelExp"><i class="fas fa-file-excel"></i> Excel</button>
-                        <button class="btn-report" id="btnPdfExp"><i class="fas fa-file-pdf"></i> PDF</button>
+                        <button class="btn-report" onclick="exportReport('excel')"><i class="fas fa-file-excel"></i> Excel</button>
+                        <button class="btn-report" onclick="exportReport('pdf')"><i class="fas fa-file-pdf"></i> PDF</button>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Settings Modal (Token) -->
-        <div id="settingsModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>الإعدادات</h3>
-                    <button class="close-modal" onclick="document.getElementById('settingsModal').classList.remove('active')">&times;</button>
-                </div>
-                <div class="form-group">
-                    <label>GitHub Token</label>
-                    <input type="password" id="githubToken" placeholder="أدخل التوكن هنا">
-                </div>
-                <button class="btn-submit" style="margin-top: 15px;" onclick="saveSettings()">حفظ الإعدادات</button>
             </div>
         </div>
     </div>
 
+    <script src="config.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

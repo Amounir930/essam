@@ -1,3 +1,4 @@
+// --- INITIAL DATA ---
 const INITIAL_DATA = [
     { date: "2026-04-01", collection: 12160, cash: 2170, instaShop: 1685, purchases: 364, expenses: 250, essam: 150, actualAmount: 11545, supply: 0 },
     { date: "2026-04-02", collection: 5370, supply: 15600, cash: 740, instaShop: 0, purchases: 0, expenses: 100, essam: 150, actualAmount: 325 },
@@ -23,63 +24,41 @@ const INITIAL_DATA = [
     { date: "2026-04-22", collection: 9050, supply: 17000, cash: 780, instaShop: 0, purchases: 105, expenses: 0, essam: 150, actualAmount: 415 }
 ];
 
-// --- Core State ---
-let records = JSON.parse(localStorage.getItem('financial_records')) || [];
+// --- CORE STATE ---
+let records = JSON.parse(localStorage.getItem('financial_records')) || INITIAL_DATA;
+let currentReportType = ''; // 'essam' or 'amazon'
 
-// If still empty, use INITIAL_DATA
-if (records.length === 0) {
-    records = INITIAL_DATA;
-}
-
-let githubToken = localStorage.getItem('github_token') || '';
-let currentExportType = ''; 
-
-const list = document.getElementById('detailedReportsList');
-const recordForm = document.getElementById('recordForm');
-
+// --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
     recalculateAll();
     renderDetailedReports();
     setupEventListeners();
 });
 
+// --- RENDER ---
 let renderTimer;
 function renderDetailedReports() {
+    const list = document.getElementById('detailedReportsList');
     if (!list) return;
     clearTimeout(renderTimer);
-    
     renderTimer = setTimeout(() => {
         const search = document.getElementById('searchTerm')?.value?.toLowerCase() || '';
         const sortBy = document.getElementById('sortBy')?.value || 'date-desc';
 
         let filtered = records.filter(r => r.date.includes(search) || String(r.collection).includes(search));
+        filtered.sort((a, b) => (sortBy === 'date-desc' ? new Date(b.date) - new Date(a.date) : new Date(a.date) - new Date(b.date)));
 
-        filtered.sort((a, b) => {
-            if (sortBy === 'date-desc') return new Date(b.date) - new Date(a.date);
-            if (sortBy === 'date-asc') return new Date(a.date) - new Date(b.date);
-            if (sortBy === 'amount-desc') return b.collection - a.collection;
-            return 0;
-        });
-
-        // Totals for filtered period
+        // Updates Summaries
         const tColl = filtered.reduce((s, r) => s + r.collection, 0);
         const tSupp = filtered.reduce((s, r) => s + r.supply, 0);
-        const amazonPending = tColl - tSupp;
-        
         document.getElementById('fTotalCollection').innerText = formatNumber(tColl);
         document.getElementById('fTotalSupply').innerText = formatNumber(tSupp);
-        document.getElementById('fTotalAmazon').innerText = formatNumber(amazonPending);
+        document.getElementById('fTotalAmazon').innerText = formatNumber(tColl - tSupp);
 
-        if (filtered.length === 0) {
-            list.innerHTML = '<div class="no-data-premium">لا توجد سجلات حالياً</div>';
-            return;
-        }
-
-        list.innerHTML = filtered.map((r) => {
+        list.innerHTML = filtered.map((r, i) => {
             const idx = records.indexOf(r);
             const d = new Date(r.date);
             const pending = r.collection - r.supply;
-            const diffClass = r.diff >= 0 ? 'pos' : 'neg';
             return `
                 <div class="ledger-row-premium">
                     <div class="col-date">
@@ -89,8 +68,7 @@ function renderDetailedReports() {
                     <div class="col-val income">${formatNumber(r.collection)}</div>
                     <div class="col-val expense">${formatNumber(r.supply)}</div>
                     <div class="col-val ${pending >=0 ? 'income' : 'expense'}">${formatNumber(pending)}</div>
-                    <div class="col-val-diff ${diffClass}">
-                        <span>${r.diff >= 0 ? 'زيادة' : 'عجز'}</span>
+                    <div class="col-val-diff ${r.diff >= 0 ? 'pos' : 'neg'}">
                         <strong>${formatNumber(Math.abs(r.diff))}</strong>
                     </div>
                     <div class="col-actions">
@@ -105,36 +83,36 @@ function renderDetailedReports() {
 
 function recalculateAll() {
     records.sort((a, b) => new Date(a.date) - new Date(b.date));
-    let runningBalance = 640; // Starting balance of the first day (01/04)
+    let balance = 640; 
     records.forEach(r => {
-        r.startBalance = runningBalance;
-        // Calculation Logic based on user's manual ledger:
-        // Treasury = Start + Collection + Insta - Supply - Cash - Purchases - Expenses - Essam
+        r.startBalance = balance;
         r.endBalance = r.startBalance + (r.collection||0) + (r.instaShop||0) - (r.supply||0) - (r.cash||0) - (r.purchases||0) - (r.expenses||0) - (r.essam||0);
         r.diff = (r.actualAmount||0) - r.endBalance;
-        runningBalance = (r.actualAmount||0); 
+        balance = r.actualAmount || 0;
     });
-    save();
+    localStorage.setItem('financial_records', JSON.stringify(records));
 }
 
+// --- MODALS ---
 window.openAddModal = () => {
-    recordForm.reset();
+    document.getElementById('recordForm').reset();
     document.getElementById('recordIndex').value = "";
     document.getElementById('date').value = new Date().toISOString().split('T')[0];
     document.getElementById('recordModal').classList.add('active');
 };
-
 window.closeAddModal = () => document.getElementById('recordModal').classList.remove('active');
 
-window.openExportModal = (type) => {
-    currentExportType = type;
-    document.getElementById('exportTitle').innerText = type === 'essam' ? 'تقرير مصروفات عصام' : 'توريدات أمازون';
-    document.getElementById('exportModal').classList.add('active');
+window.openReportModal = (type) => {
+    currentReportType = type;
+    document.getElementById('repTitle').innerText = type === 'essam' ? 'Essam Report' : 'Amazon Supply';
+    document.getElementById('repFrom').value = "";
+    document.getElementById('repTo').value = new Date().toISOString().split('T')[0];
+    document.getElementById('reportModal').classList.add('active');
 };
+window.closeReportModal = () => document.getElementById('reportModal').classList.remove('active');
 
-window.closeExportModal = () => document.getElementById('exportModal').classList.remove('active');
-
-recordForm.onsubmit = (e) => {
+// --- ACTIONS ---
+document.getElementById('recordForm').onsubmit = (e) => {
     e.preventDefault();
     const idx = document.getElementById('recordIndex').value;
     const data = {
@@ -148,85 +126,84 @@ recordForm.onsubmit = (e) => {
         essam: parseFloat(document.getElementById('essam').value) || 0,
         actualAmount: parseFloat(document.getElementById('actualAmount').value) || 0
     };
-
-    if (idx === "") records.push(data);
-    else records[idx] = data;
-
-    recalculateAll();
-    renderDetailedReports();
-    closeAddModal();
+    if (idx === "") records.push(data); else records[idx] = data;
+    recalculateAll(); renderDetailedReports(); closeAddModal();
 };
 
 window.editRecord = (idx) => {
     const r = records[idx];
     document.getElementById('recordIndex').value = idx;
-    document.getElementById('date').value = r.date;
-    document.getElementById('collection').value = r.collection;
-    document.getElementById('instaShop').value = r.instaShop || 0;
-    document.getElementById('supply').value = r.supply;
-    document.getElementById('cash').value = r.cash || 0;
-    document.getElementById('purchases').value = r.purchases || 0;
-    document.getElementById('expenses').value = r.expenses;
-    document.getElementById('essam').value = r.essam;
-    document.getElementById('actualAmount').value = r.actualAmount;
+    Object.keys(r).forEach(key => { if(document.getElementById(key)) document.getElementById(key).value = r[key]; });
     document.getElementById('recordModal').classList.add('active');
 };
 
-window.deleteRecord = (idx) => {
-    if (confirm('حذف هذا اليوم نهائياً؟')) {
-        records.splice(idx, 1);
-        recalculateAll();
-        renderDetailedReports();
-    }
-};
+window.deleteRecord = (idx) => { if(confirm('Delete?')){ records.splice(idx,1); recalculateAll(); renderDetailedReports(); } };
 
-document.getElementById('btnExcelExp').onclick = () => {
-    const f = document.getElementById('expFrom').value;
-    const t = document.getElementById('expTo').value;
-    const data = records.filter(r => (!f || r.date >= f) && (!t || r.date <= t));
+// --- GITHUB SYNC ---
+document.getElementById('btnSyncGithub').onclick = async () => {
+    const btn = document.getElementById('btnSyncGithub');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     
-    if (currentExportType === 'essam') {
-        let csv = "sep=;\nالتاريخ;اليوم;المبلغ\n";
-        let tot = 0;
-        data.filter(r => r.essam > 0).forEach(r => {
-            csv += `${r.date};${new Date(r.date).toLocaleDateString('ar-EG',{weekday:'long'})};${r.essam}\n`;
-            tot += r.essam;
-        });
-        csv += `\nالإجمالي;;${tot}`;
-        downloadCSV(csv, `مصروفات_عصام.csv`);
+    // Prepare Data (Amazon Logic)
+    let csv = "sep=;\nDate;Day;Collection;Supply;Net\n";
+    records.forEach(r => {
+        csv += `${r.date};${new Date(r.date).toLocaleDateString('en-US',{weekday:'short'})};${r.collection};${r.supply};${r.collection-r.supply}\n`;
+    });
+
+    const filename = `Supply_Reports/Report_${new Date().toISOString().split('T')[0]}.csv`;
+    const success = await pushToGitHub(csv, filename);
+    
+    if (success) {
+        alert('تم الحفظ بنجاح في GitHub!');
+        btn.innerHTML = '<i class="fas fa-check" style="color:var(--success)"></i>';
     } else {
-        let csv = "sep=;\nالتاريخ;اليوم;تحصيل;توريد;صافي\n";
-        let tc=0, ts=0;
-        data.forEach(r => {
-            csv += `${r.date};${new Date(r.date).toLocaleDateString('ar-EG',{weekday:'long'})};${r.collection};${r.supply};${r.collection-r.supply}\n`;
-            tc += r.collection; ts += r.supply;
-        });
-        csv += `\nالإجمالي;;${tc};${ts};${tc-ts}`;
-        downloadCSV(csv, `توريدات_أمازون.csv`);
+        alert('خطأ في الاتصال بـ GitHub');
+        btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i>';
     }
-    closeExportModal();
 };
 
-function downloadCSV(c, n) {
-    const b = new Blob(["\uFEFF"+c], {type: 'text/csv;charset=utf-8;'});
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(b); a.download = n; a.click();
+async function pushToGitHub(content, path) {
+    try {
+        const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${path}`;
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: `Update Financial Report ${path}`,
+                content: btoa(unescape(encodeURIComponent(content))),
+                branch: GITHUB_CONFIG.branch
+            })
+        });
+        return response.ok;
+    } catch (e) { return false; }
 }
 
-function save() { localStorage.setItem('financial_records', JSON.stringify(records)); }
-function formatNumber(n) { return Number(n).toLocaleString('en-US', {minimumFractionDigits:2}); }
+// --- EXPORT ---
+window.exportReport = (format) => {
+    const from = document.getElementById('repFrom').value;
+    const to = document.getElementById('repTo').value;
+    const data = records.filter(r => (!from || r.date >= from) && (!to || r.date <= to));
 
+    if (format === 'pdf') {
+        window.print();
+    } else {
+        let csv = "sep=;\n";
+        if (currentReportType === 'essam') {
+            csv += "Date;Day;Amount\n";
+            data.filter(r => r.essam > 0).forEach(r => csv += `${r.date};${new Date(r.date).toLocaleDateString('en-US',{weekday:'short'})};${r.essam}\n`);
+        } else {
+            csv += "Date;Day;Collection;Supply;Net\n";
+            data.forEach(r => csv += `${r.date};${new Date(r.date).toLocaleDateString('en-US',{weekday:'short'})};${r.collection};${r.supply};${r.collection-r.supply}\n`);
+        }
+        const blob = new Blob(["\uFEFF"+csv], {type:'text/csv;charset=utf-8;'});
+        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${currentReportType}_report.csv`; a.click();
+    }
+    closeReportModal();
+};
+
+function formatNumber(n) { return Number(n).toLocaleString('en-US', {minimumFractionDigits:2}); }
 function setupEventListeners() {
     document.getElementById('searchTerm').oninput = renderDetailedReports;
     document.getElementById('sortBy').onchange = renderDetailedReports;
-    document.getElementById('btnEssamReport').onclick = () => openExportModal('essam');
-    document.getElementById('btnAmazonReport').onclick = () => openExportModal('amazon');
     document.getElementById('navSettings').onclick = () => document.getElementById('settingsModal').classList.add('active');
 }
-
-window.saveSettings = () => {
-    githubToken = document.getElementById('githubToken').value;
-    localStorage.setItem('github_token', githubToken);
-    alert('تم الحفظ');
-    document.getElementById('settingsModal').classList.remove('active');
-};

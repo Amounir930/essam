@@ -83,3 +83,24 @@
 .btn-circle-delete:hover { background: #ff4b2b; color: #fff; }
 
 .no-data-premium { padding: 50px; text-align: center; color: var(--secondary); font-size: 0.9rem; }
+
+/* Print Mode Optimization */
+@media print {
+    body { background: #fff !important; color: #000 !important; padding: 0; }
+    .main-header, .smart-toolbar, .fab, .col-actions, .modal { display: none !important; }
+    #app { max-width: 100%; margin: 0; padding: 0; box-shadow: none; }
+    
+    .ledger-header, .ledger-row-premium {
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr !important; /* Hide actions column */
+        border: 1px solid #eee !important;
+        background: #fff !important;
+        color: #000 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+    }
+    
+    .date-val, .income, .expense, .pos, .neg { color: #000 !important; background: none !important; }
+    .day-name { color: #666 !important; }
+    
+    .ledger-row-premium { page-break-inside: avoid; }
+}
