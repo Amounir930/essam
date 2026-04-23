@@ -1,0 +1,5 @@
+node_modules/
+.DS_Store
+*.xlsx
+~$*.xlsx
+essam_os_backup.json

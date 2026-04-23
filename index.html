@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>نظام إدارة عصام | Essam OS</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a1c2c">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <i class="fas fa-wallet"></i>
+                <h1>Essam OS</h1>
+            </div>
+            <div class="date-display" id="currentDate"></div>
+        </header>
+
+        <!-- Main Dashboard -->
+        <main>
+            <section class="summary-cards">
+                <div class="card balance-card">
+                    <span class="label">مبلغ الخزنة الحالي</span>
+                    <span class="value" id="totalBalance">0.00</span>
+                    <span class="currency">ج.م</span>
+                </div>
+                <div class="mini-cards">
+                    <div class="mini-card income">
+                        <i class="fas fa-arrow-down"></i>
+                        <div class="info">
+                            <span class="label">المبلغ الفعلي</span>
+                            <span class="value" id="totalActual">0.00</span>
+                        </div>
+                    </div>
+                    <div class="mini-card deficit" id="diffCard">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <div class="info">
+                            <span class="label">العجز / الزيادة</span>
+                            <span class="value" id="totalDiff">0.00</span>
+                        </div>
+                    </div>
+                    <div class="mini-card income">
+                        <i class="fas fa-cash-register"></i>
+                        <div class="info">
+                            <span class="label">تحصيل اليوم</span>
+                            <span class="value" id="todayIncome">0.00</span>
+                        </div>
+                    </div>
+                    <div class="mini-card expense">
+                        <i class="fas fa-user-tag"></i>
+                        <div class="info">
+                            <span class="label">مصاريف عصام</span>
+                            <span class="value" id="todayEssam">0.00</span>
+                        </div>
+                    </div>
+                    <div class="mini-card expense">
+                        <i class="fas fa-receipt"></i>
+                        <div class="info">
+                            <span class="label">مصاريف المحل</span>
+                            <span class="value" id="todayExpense">0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Actions -->
+            <section class="actions">
+                <button id="addRecordBtn" class="btn-primary">
+                    <i class="fas fa-plus"></i>
+                    إضافة سجل جديد
+                </button>
+            </section>
+
+            <!-- History -->
+            <section class="history page" id="historyPage">
+                <div class="section-header">
+                    <h2>سجل المعاملات</h2>
+                    <button id="exportBtn" class="btn-text">
+                        <i class="fas fa-file-export"></i>
+                        تصدير Excel
+                    </button>
+                </div>
+                <div class="records-container" id="recordsList">
+                    <div class="no-data">لا توجد سجلات بعد</div>
+                </div>
+            </section>
+
+            <!-- Reports Page -->
+            <section class="reports page" id="reportsPage" style="display: none;">
+                <div class="section-header">
+                    <h2>التقرير التفصيلي للأيام</h2>
+                </div>
+                <div class="records-container" id="detailedReportsList">
+                    <!-- Detailed reports injected here -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Add Record Modal -->
+        <div id="recordModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>إضافة سجل يوم جديد</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <form id="recordForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>التاريخ</label>
+                            <input type="date" id="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>بداية اليوم (تلقائي)</label>
+                            <input type="number" id="startBalance" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>التحصيل</label>
+                            <input type="number" id="collection" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>التوريد</label>
+                            <input type="number" id="supply" value="0">
+                            <div class="upload-container">
+                                <label for="supplyImage" class="btn-upload">
+                                    <i class="fas fa-camera"></i> رفع صورة
+                                </label>
+                                <input type="file" id="supplyImage" accept="image/*" style="display: none;">
+                                <span id="fileName" class="file-name"></span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>تحويل كاش</label>
+                            <input type="number" id="cash" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>اوردرات انستا</label>
+                            <input type="number" id="instaShop" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>المشتريات</label>
+                            <input type="number" id="purchases" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>مصروفات المحل</label>
+                            <input type="number" id="expenses" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>مصروفات عصام</label>
+                            <input type="number" id="essam" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>الخزنة</label>
+                            <input type="number" id="safe" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>المبلغ الفعلي</label>
+                            <input type="number" id="actualAmount" value="0">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn-submit">حفظ السجل</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Navigation Bar (Mobile Style) -->
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item active">
+                <i class="fas fa-home"></i>
+                <span>الرئيسية</span>
+            </a>
+            <a href="#" class="nav-item" id="navReports">
+                <i class="fas fa-chart-line"></i>
+                <span>تقارير</span>
+            </a>
+            <a href="#" class="nav-item" id="navSettings">
+                <i class="fas fa-cog"></i>
+                <span>الإعدادات</span>
+            </a>
+        </nav>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>إعدادات GitHub</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="form-group">
+                    <label>GitHub Personal Access Token</label>
+                    <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx">
+                </div>
+                <div class="form-group">
+                    <label>Repository (Owner/Repo)</label>
+                    <input type="text" id="ghRepo" value="Amounir930/essam">
+                </div>
+                <button id="saveSettings" class="btn-submit">حفظ الإعدادات</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js');
+            });
+        }
+    </script>
+</body>
+</html>
