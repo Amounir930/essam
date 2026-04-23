@@ -1,0 +1,103 @@
+/* Professional Print Stylesheet */
+@media print {
+    @page {
+        size: A4;
+        margin: 15mm;
+    }
+
+    body * {
+        visibility: hidden;
+    }
+
+    #printTemplate, #printTemplate * {
+        visibility: visible;
+    }
+
+    #printTemplate {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        direction: rtl;
+        font-family: 'Tajawal', sans-serif;
+        color: #000;
+        background: #fff;
+    }
+
+    .print-header {
+        text-align: center;
+        border-bottom: 2px solid #333;
+        padding-bottom: 15px;
+        margin-bottom: 25px;
+    }
+
+    .print-header h1 {
+        font-size: 22px;
+        margin-bottom: 5px;
+        color: #1a1c2c;
+    }
+
+    .print-header p {
+        font-size: 14px;
+        color: #666;
+    }
+
+    .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+    .print-table th {
+        background-color: #f4f4f4 !important;
+        color: #333;
+        border: 1px solid #ddd;
+        padding: 12px 8px;
+        font-size: 13px;
+        text-align: right;
+    }
+
+    .print-table td {
+        border: 1px solid #eee;
+        padding: 10px 8px;
+        font-size: 12px;
+        text-align: right;
+    }
+
+    .print-table tr:nth-child(even) {
+        background-color: #fafafa !important;
+    }
+
+    .print-table .num {
+        font-family: 'JetBrains Mono', monospace;
+        text-align: left;
+        direction: ltr;
+        font-weight: 600;
+    }
+
+    .print-footer-row {
+        background-color: #1a1c2c !important;
+        color: #fff !important;
+        font-weight: bold;
+    }
+
+    .print-footer-row td {
+        border: 1px solid #1a1c2c;
+        font-size: 14px;
+    }
+
+    .report-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: #888;
+        margin-top: 30px;
+        border-top: 1px solid #eee;
+        padding-top: 10px;
+    }
+}
+
+/* Hide template in screen mode */
+#printTemplate {
+    display: none;
+}

@@ -175,47 +175,63 @@ async function pushToGitHub(content, path) {
 
 // --- EXPORT ---
 window.exportReport = async (format) => {
-    const list = document.getElementById('detailedReportsList');
     const from = document.getElementById('repFrom').value;
     const to = document.getElementById('repTo').value;
     const filtered = records.filter(r => (!from || r.date >= from) && (!to || r.date <= to));
+    const printContainer = document.getElementById('printTemplate');
 
     if (format === 'pdf') {
-        const header = document.querySelector('.ledger-header');
-        const originalHeader = header.innerHTML;
-        const originalBody = list.innerHTML;
-        
+        let tableRows = '';
+        let totalVal = 0;
+        let reportTitle = '';
+        let tableHeaders = '';
+
         if (currentReportType === 'essam') {
+            reportTitle = 'تقرير مصروفات عصام التفصيلي';
+            tableHeaders = '<tr><th>التاريخ واليوم</th><th>المبلغ المسحوب</th></tr>';
             const data = filtered.filter(r => r.essam > 0);
-            header.innerHTML = '<div>Date</div><div>Essam Expenses</div>';
-            header.style.gridTemplateColumns = '1fr 1fr';
-            list.innerHTML = data.map(r => `
-                <div class="ledger-row-premium" style="grid-template-columns: 1fr 1fr">
-                    <div>${r.date}</div>
-                    <div style="text-align:center;color:#00f2fe"><strong>${formatNumber(r.essam)}</strong></div>
-                </div>
-            `).join('') + `<div class="ledger-row-premium" style="grid-template-columns: 1fr 1fr"><div><strong>Total</strong></div><div style="text-align:center"><strong>${formatNumber(data.reduce((s,r)=>s+r.essam,0))}</strong></div></div>`;
+            data.forEach(r => {
+                tableRows += `<tr><td>${r.date} (${new Date(r.date).toLocaleDateString('ar-EG',{weekday:'long'})})</td><td class="num">${formatNumber(r.essam)}</td></tr>`;
+                totalVal += r.essam;
+            });
+            tableRows += `<tr class="print-footer-row"><td>الإجمالي الكلي</td><td class="num">${formatNumber(totalVal)}</td></tr>`;
         } else {
-            header.innerHTML = '<div>Date</div><div>Coll</div><div>Supp</div><div>Net</div>';
-            header.style.gridTemplateColumns = '1fr 1fr 1fr 1fr';
-            list.innerHTML = filtered.map(r => `
-                <div class="ledger-row-premium" style="grid-template-columns: 1fr 1fr 1fr 1fr">
-                    <div>${r.date}</div>
-                    <div style="text-align:center">${formatNumber(r.collection)}</div>
-                    <div style="text-align:center">${formatNumber(r.supply)}</div>
-                    <div style="text-align:center">${formatNumber(r.collection-r.supply)}</div>
-                </div>
-            `).join('');
+            reportTitle = 'تقرير توريدات ومطابقة حسابات أمازون';
+            tableHeaders = '<tr><th>التاريخ</th><th>التحصيل (وارد)</th><th>التوريد (منصرف)</th><th>الصافي المعلق</th></tr>';
+            let tColl = 0, tSupp = 0;
+            filtered.forEach(r => {
+                const net = r.collection - r.supply;
+                tableRows += `<tr><td>${r.date}</td><td class="num">${formatNumber(r.collection)}</td><td class="num">${formatNumber(r.supply)}</td><td class="num">${formatNumber(net)}</td></tr>`;
+                tColl += r.collection; tSupp += r.supply;
+            });
+            tableRows += `<tr class="print-footer-row"><td>الإجماليات</td><td class="num">${formatNumber(tColl)}</td><td class="num">${formatNumber(tSupp)}</td><td class="num">${formatNumber(tColl-tSupp)}</td></tr>`;
         }
+
+        printContainer.innerHTML = `
+            <div class="print-header">
+                <h1>Essam Financial OS</h1>
+                <h2>${reportTitle}</h2>
+                <p>الفترة من: ${from || 'بداية السجل'} إلى: ${to || 'تاريخه'}</p>
+            </div>
+            <table class="print-table">
+                <thead>${tableHeaders}</thead>
+                <tbody>${tableRows}</tbody>
+            </table>
+            <div class="report-meta">
+                <span>تم الاستخراج بواسطة: Essam OS</span>
+                <span>تاريخ الاستخراج: ${new Date().toLocaleString('ar-EG')}</span>
+                <span>صفحة 1 من 1</span>
+            </div>
+        `;
 
         closeReportModal();
         setTimeout(() => {
             window.print();
-            header.innerHTML = originalHeader;
-            header.style.gridTemplateColumns = '';
-            renderDetailedReports();
-        }, 800);
+            printContainer.innerHTML = '';
+        }, 500);
+        
     } else {
+        // Excel remains English for total compatibility as requested
         let csv = "sep=;\n";
         if (currentReportType === 'essam') {
             csv += "Date;Day;Amount\n";
