@@ -197,47 +197,62 @@ function renderDetailedReports() {
 }
 
 window.generateEssamReport = function() {
-    const from = document.getElementById('filterFrom').value || 'بداية السجل';
-    const to = document.getElementById('filterTo').value || 'اليوم';
+    const from = document.getElementById('filterFrom').value;
+    const to = document.getElementById('filterTo').value;
     const filtered = records.filter(r => {
         const d = r.date;
-        return (!document.getElementById('filterFrom').value || d >= document.getElementById('filterFrom').value) && 
-               (!document.getElementById('filterTo').value || d <= document.getElementById('filterTo').value);
+        return (!from || d >= from) && (!to || d <= to) && r.essam > 0;
     });
-    
-    let report = `تقرير مصروفات عصام (${from} - ${to})\n\n`;
+
+    if (filtered.length === 0) return alert('لا توجد مصروفات لعصام في هذه الفترة');
+
+    let csvContent = "\uFEFFالتاريخ,اليوم,المبلغ\n";
     let total = 0;
     filtered.forEach(r => {
-        if (r.essam > 0) {
-            report += `${r.date}: ${formatNumber(r.essam)} ج.م\n`;
-            total += r.essam;
-        }
+        const dayName = new Date(r.date).toLocaleDateString('ar-EG', {weekday: 'long'});
+        csvContent += `${r.date},${dayName},${r.essam}\n`;
+        total += r.essam;
     });
-    report += `\nالإجمالي: ${formatNumber(total)} ج.م`;
-    alert(report);
+    csvContent += `\nالإجمالي,,${total}`;
+
+    downloadCSV(csvContent, `مصروفات_عصام_${from || 'كل_المدة'}.csv`);
 };
 
 window.generateAmazonReport = function() {
-    const from = document.getElementById('filterFrom').value || 'بداية السجل';
-    const to = document.getElementById('filterTo').value || 'اليوم';
+    const from = document.getElementById('filterFrom').value;
+    const to = document.getElementById('filterTo').value;
     const filtered = records.filter(r => {
         const d = r.date;
-        return (!document.getElementById('filterFrom').value || d >= document.getElementById('filterFrom').value) && 
-               (!document.getElementById('filterTo').value || d <= document.getElementById('filterTo').value);
+        return (!from || d >= from) && (!to || d <= to);
     });
 
-    let report = `تقرير التحصيل والتوريد لأمازون (${from} - ${to})\n\n`;
+    if (filtered.length === 0) return alert('لا توجد بيانات في هذه الفترة');
+
+    let csvContent = "\uFEFFالتاريخ,اليوم,التحصيل,التوريد,الصافي المعلق\n";
     let tColl = 0, tSupp = 0;
     filtered.forEach(r => {
-        report += `${r.date} | تحصيل: ${formatNumber(r.collection)} | توريد: ${formatNumber(r.supply)}\n`;
+        const dayName = new Date(r.date).toLocaleDateString('ar-EG', {weekday: 'long'});
+        const pending = r.collection - r.supply;
+        csvContent += `${r.date},${dayName},${r.collection},${r.supply},${pending}\n`;
         tColl += r.collection;
         tSupp += r.supply;
     });
-    report += `\nإجمالي التحصيل: ${formatNumber(tColl)}`;
-    report += `\nإجمالي التوريد: ${formatNumber(tSupp)}`;
-    report += `\nالمتبقي لأمازون: ${formatNumber(tColl - tSupp)}`;
-    alert(report);
+    csvContent += `\nالإجماليات,,${tColl},${tSupp},${tColl - tSupp}`;
+
+    downloadCSV(csvContent, `تقرير_أمازون_${from || 'كل_المدة'}.csv`);
 };
+
+function downloadCSV(content, filename) {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
 
 function formatNumber(num) {
     return Number(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
