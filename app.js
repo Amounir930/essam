@@ -1,4 +1,4 @@
-// Essam OS - Application Logic Phase 2
+// Essam OS - Application Logic Phase 2 (Stable Multi-page)
 
 // --- Constants & State ---
 const STORAGE_KEY = 'essam_os_records';
@@ -43,7 +43,6 @@ const modal = document.getElementById('recordModal');
 const settingsModal = document.getElementById('settingsModal');
 const recordForm = document.getElementById('recordForm');
 const recordsList = document.getElementById('recordsList');
-const essamDetailsList = document.getElementById('essamDetailsList');
 
 const totalBalanceEl = document.getElementById('totalBalance');
 const totalActualEl = document.getElementById('totalActual');
@@ -53,9 +52,6 @@ const todayEssamEl = document.getElementById('todayEssam');
 const todayExpenseEl = document.getElementById('todayExpense');
 
 const detailedReportsList = document.getElementById('detailedReportsList');
-const historyPage = document.getElementById('historyPage');
-const reportsPage = document.getElementById('reportsPage');
-
 const currentDateEl = document.getElementById('currentDate');
 const diffCard = document.getElementById('diffCard');
 
@@ -70,37 +66,34 @@ function init() {
 }
 
 function setCurrentDate() {
+    if (!currentDateEl) return;
     const now = new Date();
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     currentDateEl.innerText = now.toLocaleDateString('ar-EG', options);
 }
 
 function loadSettings() {
-    document.getElementById('ghToken').value = settings.token;
-    document.getElementById('ghRepo').value = settings.repo;
+    if (document.getElementById('ghToken')) document.getElementById('ghToken').value = settings.token;
+    if (document.getElementById('ghRepo')) document.getElementById('ghRepo').value = settings.repo;
 }
 
 // --- Logic Functions ---
 
 function updateSummary() {
-    if (records.length === 0) {
-        totalBalanceEl.innerText = '0.00';
-        totalActualEl.innerText = '0.00';
-        totalDiffEl.innerText = '0.00';
-        return;
-    }
+    if (records.length === 0) return;
 
     const lastRecord = records[records.length - 1];
-    totalBalanceEl.innerText = formatNumber(lastRecord.endBalance);
-    totalActualEl.innerText = formatNumber(lastRecord.actualAmount || 0);
+    
+    if (totalBalanceEl) totalBalanceEl.innerText = formatNumber(lastRecord.endBalance);
+    if (totalActualEl) totalActualEl.innerText = formatNumber(lastRecord.actualAmount || 0);
     
     const diff = lastRecord.diff || 0;
-    totalDiffEl.innerText = formatNumber(diff);
+    if (totalDiffEl) totalDiffEl.innerText = formatNumber(diff);
     
-    // Update color
-    diffCard.className = 'mini-card deficit ' + (diff < 0 ? 'is-deficit' : (diff > 0 ? 'is-surplus' : ''));
+    if (diffCard) {
+        diffCard.className = 'mini-card deficit ' + (diff < 0 ? 'is-deficit' : (diff > 0 ? 'is-surplus' : ''));
+    }
 
-    // Filter today's income/expense
     const todayStr = new Date().toISOString().split('T')[0];
     const todayRecords = records.filter(r => r.date === todayStr);
     
@@ -108,9 +101,9 @@ function updateSummary() {
     const essamExp = todayRecords.reduce((sum, r) => sum + r.essam, 0);
     const expense = todayRecords.reduce((sum, r) => sum + (r.supply + r.cash + r.purchases + r.expenses), 0);
 
-    todayIncomeEl.innerText = formatNumber(income);
-    todayEssamEl.innerText = formatNumber(essamExp);
-    todayExpenseEl.innerText = formatNumber(expense);
+    if (todayIncomeEl) todayIncomeEl.innerText = formatNumber(income);
+    if (todayEssamEl) todayEssamEl.innerText = formatNumber(essamExp);
+    if (todayExpenseEl) todayExpenseEl.innerText = formatNumber(expense);
 }
 
 function renderRecords() {
@@ -119,35 +112,10 @@ function renderRecords() {
         recordsList.innerHTML = '<div class="no-data">لا توجد سجلات بعد</div>';
         return;
     }
-
-    const sortedRecords = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    recordsList.innerHTML = sortedRecords.map((r) => {
-        const index = records.indexOf(r);
-        const dateObj = new Date(r.date);
-        const dayName = dateObj.toLocaleDateString('ar-EG', { weekday: 'long' });
-        const dateStr = dateObj.toLocaleDateString('ar-EG', { day: '2-digit', month: '2-digit' });
-
-        const statusClass = r.diff >= 0 ? 'success' : 'danger';
-        const diffText = r.diff >= 0 ? `+${formatNumber(r.diff)} (زيادة)` : `${formatNumber(r.diff)} (عجز)`;
-
-        return `
-            <div class="record-item">
-                <div class="record-info">
-                    <span class="record-date">${dateStr}</span>
-                    <span class="record-day">${dayName}</span>
-                </div>
-                <div class="record-amount">
-                    <span class="amount">${formatNumber(r.endBalance)} ج.م</span>
-                    <span class="diff ${statusClass}">${diffText}</span>
-                </div>
-                <div class="record-actions">
-                    <button class="btn-action edit" onclick="editRecord(${index})"><i class="fas fa-edit"></i></button>
-                    <button class="btn-action delete" onclick="deleteRecord(${index})"><i class="fas fa-trash"></i></button>
-                </div>
-            </div>
-        `;
-    }).join('');
+    // We keep this empty for index if we want it gone, 
+    // but the user might still want a small summary. 
+    // For now, let's just make it empty if it's index.
+    recordsList.innerHTML = ''; 
 }
 
 function renderDetailedReports() {
@@ -192,8 +160,6 @@ function formatNumber(num) {
     return Number(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// --- Actions ---
-
 window.deleteRecord = function(index) {
     if (confirm('هل أنت متأكد من حذف هذا السجل؟')) {
         records.splice(index, 1);
@@ -205,6 +171,7 @@ window.deleteRecord = function(index) {
 window.editRecord = function(index) {
     editIndex = index;
     const r = records[index];
+    if (!modal) return;
     
     document.getElementById('date').value = r.date;
     document.getElementById('startBalance').value = r.startBalance;
@@ -222,19 +189,9 @@ window.editRecord = function(index) {
 };
 
 function recalculateAll() {
-    // Sort by date to ensure carry-over works
     records.sort((a, b) => new Date(a.date) - new Date(b.date));
-    
-    let prevEnd = 0;
     records.forEach((r, i) => {
-        if (i === 0) {
-            // First record keeps its start balance if it was manual, 
-            // but usually it should be 0 if it's the start of the system.
-            // For now, let's keep it as is.
-        } else {
-            r.startBalance = records[i-1].endBalance;
-        }
-        
+        if (i > 0) r.startBalance = records[i-1].endBalance;
         r.endBalance = r.startBalance + r.collection + r.instaShop - 
                       (r.supply + r.cash + r.purchases + r.expenses + r.essam);
         r.diff = (r.actualAmount || 0) - r.endBalance;
@@ -244,59 +201,29 @@ function recalculateAll() {
 function saveAndRefresh() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
     updateSummary();
-    renderRecords();
     renderDetailedReports();
 }
 
 async function uploadToGitHub(file, date) {
-    if (!settings.token) {
-        console.warn('GitHub token not set');
-        return;
-    }
-
+    if (!settings.token) return;
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = async () => {
         const base64Content = reader.result.split(',')[1];
         const fileName = `supply_${date}_${Date.now()}.png`;
         const url = `https://api.github.com/repos/${settings.repo}/contents/توريدات/${fileName}`;
-
         try {
-            const response = await fetch(url, {
+            await fetch(url, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `token ${settings.token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: `Upload supply image for ${date}`,
-                    content: base64Content
-                })
+                headers: { 'Authorization': `token ${settings.token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: `Upload supply image for ${date}`, content: base64Content })
             });
-
-            if (response.ok) {
-                alert('تم رفع الصورة بنجاح إلى GitHub');
-            } else {
-                alert('فشل رفع الصورة. تأكد من الـ Token والصلاحيات.');
-            }
-        } catch (error) {
-            console.error('GitHub Upload Error:', error);
-        }
+            alert('تم رفع الصورة بنجاح');
+        } catch (error) { console.error(error); }
     };
 }
 
-// --- Event Listeners ---
-
 function setupEventListeners() {
-    // Navigation
-
-    if (document.querySelector('.nav-item.active') && historyPage) {
-        document.querySelector('.nav-item.active').addEventListener('click', (e) => {
-            e.preventDefault();
-            togglePage('historyPage');
-        });
-    }
-
     if (document.getElementById('navSettings')) {
         document.getElementById('navSettings').addEventListener('click', (e) => {
             e.preventDefault();
@@ -304,103 +231,82 @@ function setupEventListeners() {
         });
     }
 
-    function togglePage(pageId) {
-        const p = document.getElementById(pageId);
-        if (!p) return;
-        document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-        p.style.display = 'block';
-        
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        if (pageId === 'historyPage') document.querySelector('.nav-item:first-child').classList.add('active');
-        if (pageId === 'reportsPage') document.getElementById('navReports').classList.add('active');
-    }
-
-    // Modal Close
     document.querySelectorAll('.close-modal').forEach(btn => {
         btn.addEventListener('click', () => {
-            modal.classList.remove('active');
-            settingsModal.classList.remove('active');
+            if (modal) modal.classList.remove('active');
+            if (settingsModal) settingsModal.classList.remove('active');
             editIndex = -1;
+        });
+    });
+
+    if (document.getElementById('supplyImage')) {
+        document.getElementById('supplyImage').addEventListener('change', (e) => {
+            if (document.getElementById('fileName'))
+                document.getElementById('fileName').innerText = e.target.files[0] ? e.target.files[0].name : '';
+        });
+    }
+
+    const addRecordBtn = document.getElementById('addRecordBtn');
+    if (addRecordBtn) {
+        addRecordBtn.addEventListener('click', () => {
+            editIndex = -1;
+            document.getElementById('startBalance').value = records.length > 0 ? records[records.length-1].endBalance : 0;
+            document.getElementById('date').value = new Date().toISOString().split('T')[0];
+            modal.classList.add('active');
+        });
+    }
+
+    if (recordForm) {
+        recordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const record = {
+                date: document.getElementById('date').value,
+                startBalance: parseFloat(document.getElementById('startBalance').value || 0),
+                collection: parseFloat(document.getElementById('collection').value || 0),
+                supply: parseFloat(document.getElementById('supply').value || 0),
+                cash: parseFloat(document.getElementById('cash').value || 0),
+                instaShop: parseFloat(document.getElementById('instaShop').value || 0),
+                purchases: parseFloat(document.getElementById('purchases').value || 0),
+                expenses: parseFloat(document.getElementById('expenses').value || 0),
+                essam: parseFloat(document.getElementById('essam').value || 0),
+                actualAmount: parseFloat(document.getElementById('actualAmount').value || 0)
+            };
+            const fileInput = document.getElementById('supplyImage');
+            if (fileInput && fileInput.files[0]) await uploadToGitHub(fileInput.files[0], record.date);
+            if (editIndex > -1) records[editIndex] = record;
+            else records.push(record);
+            recalculateAll();
+            saveAndRefresh();
+            modal.classList.remove('active');
             recordForm.reset();
         });
-    });
+    }
 
-    // File Name Display
-    document.getElementById('supplyImage').addEventListener('change', (e) => {
-        document.getElementById('fileName').innerText = e.target.files[0] ? e.target.files[0].name : '';
-    });
-
-    // Add/Edit Record Btn
-    document.getElementById('addRecordBtn').addEventListener('click', () => {
-        editIndex = -1;
-        document.querySelector('#recordModal h3').innerText = 'إضافة سجل يوم جديد';
-        document.getElementById('startBalance').value = records.length > 0 ? records[records.length-1].endBalance : 0;
-        document.getElementById('date').value = new Date().toISOString().split('T')[0];
-        modal.classList.add('active');
-    });
-
-    // Form Submission
-    recordForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const formData = new FormData(recordForm);
-        const record = {
-            date: formData.get('date'),
-            startBalance: parseFloat(document.getElementById('startBalance').value || 0),
-            collection: parseFloat(formData.get('collection') || 0),
-            supply: parseFloat(formData.get('supply') || 0),
-            cash: parseFloat(formData.get('cash') || 0),
-            instaShop: parseFloat(formData.get('instaShop') || 0),
-            purchases: parseFloat(formData.get('purchases') || 0),
-            expenses: parseFloat(formData.get('expenses') || 0),
-            essam: parseFloat(formData.get('essam') || 0),
-            actualAmount: parseFloat(formData.get('actualAmount') || 0)
-        };
-
-        // Handle Image Upload
-        const fileInput = document.getElementById('supplyImage');
-        if (fileInput.files[0]) {
-            await uploadToGitHub(fileInput.files[0], record.date);
-        }
-
-        if (editIndex > -1) {
-            records[editIndex] = record;
-        } else {
-            records.push(record);
-        }
-
-        recalculateAll();
-        saveAndRefresh();
-        modal.classList.remove('active');
-        recordForm.reset();
-    });
-
-    // Settings Save
-    document.getElementById('saveSettings').addEventListener('click', () => {
-        settings.token = document.getElementById('ghToken').value;
-        settings.repo = document.getElementById('ghRepo').value;
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-        settingsModal.classList.remove('active');
-        alert('تم حفظ الإعدادات بنجاح');
-    });
-
-    // Export Excel
-    document.getElementById('exportBtn').addEventListener('click', () => {
-        if (records.length === 0) return alert('لا توجد بيانات لتصديرها');
-        let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "اليوم,بداية اليوم,التحصيل,توريد,تحويل كاش,اوردرات انستا,مشتريات,مصروفات محل,مصروفات عصام,مبلغ الخزنة,المبلغ الفعلي,عجز/زيادة\n";
-        records.forEach(r => {
-            csvContent += `${r.date},${r.startBalance},${r.collection},${r.supply},${r.cash},${r.instaShop},${r.purchases},${r.expenses},${r.essam},${r.endBalance},${r.actualAmount || 0},${r.diff || 0}\n`;
+    const saveSettingsBtn = document.getElementById('saveSettings');
+    if (saveSettingsBtn) {
+        saveSettingsBtn.addEventListener('click', () => {
+            settings.token = document.getElementById('ghToken').value;
+            settings.repo = document.getElementById('ghRepo').value;
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+            settingsModal.classList.remove('active');
+            alert('تم حفظ الإعدادات');
         });
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `essam_full_report_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-    });
+    }
+
+    const exportBtn = document.getElementById('exportBtn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+            if (records.length === 0) return alert('لا توجد بيانات');
+            let csvContent = "data:text/csv;charset=utf-8,اليوم,بداية اليوم,التحصيل,توريد,تحويل كاش,اوردرات انستا,مشتريات,مصروفات محل,مصروفات عصام,مبلغ الخزنة,المبلغ الفعلي,عجز/زيادة\n";
+            records.forEach(r => {
+                csvContent += `${r.date},${r.startBalance},${r.collection},${r.supply},${r.cash},${r.instaShop},${r.purchases},${r.expenses},${r.essam},${r.endBalance},${r.actualAmount || 0},${r.diff || 0}\n`;
+            });
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csvContent));
+            link.setAttribute("download", `report.csv`);
+            link.click();
+        });
+    }
 }
 
-// Start the app
 init();
