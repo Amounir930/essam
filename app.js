@@ -258,12 +258,6 @@ async function uploadToGitHub(file, date) {
 
 function setupEventListeners() {
     // Navigation
-    if (document.getElementById('navReports') && !document.getElementById('navReports').hasAttribute('target')) {
-        document.getElementById('navReports').addEventListener('click', (e) => {
-            e.preventDefault();
-            togglePage('reportsPage');
-        });
-    }
 
     if (document.querySelector('.nav-item.active') && historyPage) {
         document.querySelector('.nav-item.active').addEventListener('click', (e) => {
