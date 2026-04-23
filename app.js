@@ -179,26 +179,64 @@ async function pushToGitHub(content, path) {
 }
 
 // --- EXPORT ---
-window.exportReport = (format) => {
+window.exportReport = async (format) => {
     const from = document.getElementById('repFrom').value;
     const to = document.getElementById('repTo').value;
-    const data = records.filter(r => (!from || r.date >= from) && (!to || r.date <= to));
+    const filtered = records.filter(r => (!from || r.date >= from) && (!to || r.date <= to));
 
     if (format === 'pdf') {
-        window.print();
+        // PRE-PRINT PREP: Temporary Filter for PDF
+        const originalListHTML = list.innerHTML;
+        const originalHeaderHTML = document.querySelector('.ledger-header').innerHTML;
+        const header = document.querySelector('.ledger-header');
+        
+        if (currentReportType === 'essam') {
+            const essamData = filtered.filter(r => r.essam > 0);
+            header.innerHTML = '<div>Date / Day</div><div>Essam Withdrawals</div>';
+            header.style.gridTemplateColumns = '1fr 1fr';
+            list.innerHTML = essamData.map(r => `
+                <div class="ledger-row-premium" style="grid-template-columns: 1fr 1fr">
+                    <div class="col-date"><strong>${r.date}</strong></div>
+                    <div class="col-val income">${formatNumber(r.essam)}</div>
+                </div>
+            `).join('') + `<div class="ledger-row-premium" style="grid-template-columns: 1fr 1fr"><div><strong>Total</strong></div><div class="income"><strong>${formatNumber(essamData.reduce((s,r)=>s+r.essam,0))}</strong></div></div>`;
+        } else {
+            const amazonData = filtered;
+            header.innerHTML = '<div>Date / Day</div><div>Collection</div><div>Supply</div><div>Net</div>';
+            header.style.gridTemplateColumns = '1fr 1fr 1fr 1fr';
+            list.innerHTML = amazonData.map(r => `
+                <div class="ledger-row-premium" style="grid-template-columns: 1fr 1fr 1fr 1fr">
+                    <div class="col-date"><strong>${r.date}</strong></div>
+                    <div class="col-val income">${formatNumber(r.collection)}</div>
+                    <div class="col-val expense">${formatNumber(r.supply)}</div>
+                    <div class="col-val">${formatNumber(r.collection-r.supply)}</div>
+                </div>
+            `).join('');
+        }
+
+        closeReportModal();
+        setTimeout(() => {
+            window.print();
+            // RESTORE ORIGINAL VIEW
+            header.innerHTML = originalHeaderHTML;
+            header.style.gridTemplateColumns = '';
+            renderDetailedReports();
+        }, 300);
+        
     } else {
+        // Excel logic remains the same but with clear English headers
         let csv = "sep=;\n";
         if (currentReportType === 'essam') {
             csv += "Date;Day;Amount\n";
-            data.filter(r => r.essam > 0).forEach(r => csv += `${r.date};${new Date(r.date).toLocaleDateString('en-US',{weekday:'short'})};${r.essam}\n`);
+            filtered.filter(r => r.essam > 0).forEach(r => csv += `${r.date};${new Date(r.date).toLocaleDateString('en-US',{weekday:'short'})};${r.essam}\n`);
         } else {
             csv += "Date;Day;Collection;Supply;Net\n";
-            data.forEach(r => csv += `${r.date};${new Date(r.date).toLocaleDateString('en-US',{weekday:'short'})};${r.collection};${r.supply};${r.collection-r.supply}\n`);
+            filtered.forEach(r => csv += `${r.date};${new Date(r.date).toLocaleDateString('en-US',{weekday:'short'})};${r.collection};${r.supply};${r.collection-r.supply}\n`);
         }
         const blob = new Blob(["\uFEFF"+csv], {type:'text/csv;charset=utf-8;'});
         const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${currentReportType}_report.csv`; a.click();
+        closeReportModal();
     }
-    closeReportModal();
 };
 
 function formatNumber(n) { return Number(n).toLocaleString('en-US', {minimumFractionDigits:2}); }
