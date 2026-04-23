@@ -71,18 +71,16 @@ function renderAll() {
     let filtered = records.filter(r => r.date.includes(search) || String(r.collection).includes(search));
     filtered.sort((a, b) => (sortBy === 'date-desc' ? new Date(b.date) - new Date(a.date) : new Date(a.date) - new Date(b.date)));
 
-    const tColl = filtered.reduce((s, r) => s + r.collection, 0);
-    const tSupp = filtered.reduce((s, r) => s + r.supply, 0);
-    document.getElementById('fTotalCollection').innerText = formatNumber(tColl);
-    document.getElementById('fTotalSupply').innerText = formatNumber(tSupp);
-    document.getElementById('fTotalAmazon').innerText = formatNumber(tColl - tSupp);
+    document.getElementById('fTotalCollection').innerText = formatNumber(filtered.reduce((s, r) => s + r.collection, 0));
+    document.getElementById('fTotalSupply').innerText = formatNumber(filtered.reduce((s, r) => s + r.supply, 0));
+    document.getElementById('fTotalAmazon').innerText = formatNumber(filtered.reduce((s, r) => s + (r.collection - r.supply), 0));
 
     list.innerHTML = filtered.map((r) => {
         const idx = records.indexOf(r);
         const net = r.collection - r.supply;
         const statusClass = r.diff >= 0 ? 'pos' : 'neg';
-        const statusLabel = r.diff >= 0 ? 'مطابق/زيادة' : 'عجز';
-        const invoiceLink = r.invoiceUrl ? `<a href="${r.invoiceUrl}" target="_blank" class="action-btn" title="عرض الفاتورة"><i class="fas fa-paperclip"></i></a>` : '';
+        const statusLabel = r.diff >= 0 ? 'مطابق' : 'عجز';
+        const invoiceLink = r.invoiceUrl ? `<a href="${r.invoiceUrl}" target="_blank" class="action-btn" title="الفاتورة"><i class="fas fa-paperclip"></i></a>` : '';
 
         return `
             <tr>
@@ -90,9 +88,9 @@ function renderAll() {
                     <div style="font-weight:700">${r.date}</div>
                     <div style="font-size:0.75rem; color:var(--text-secondary)">${new Date(r.date).toLocaleDateString('ar-EG', {weekday:'long'})}</div>
                 </td>
-                <td class="text-center num pos">${formatNumber(r.collection)}</td>
-                <td class="text-center num neg">${formatNumber(r.supply)}</td>
-                <td class="text-center num">${formatNumber(net)}</td>
+                <td class="text-end num" style="color:var(--success)">${formatNumber(r.collection)}</td>
+                <td class="text-end num" style="color:var(--danger)">${formatNumber(r.supply)}</td>
+                <td class="text-end num">${formatNumber(net)}</td>
                 <td class="text-center">
                     <span class="status-tag ${statusClass}">${statusLabel} (${formatNumber(Math.abs(r.diff))})</span>
                 </td>
@@ -130,7 +128,7 @@ window.closeAddModal = () => document.getElementById('recordModal').classList.re
 
 window.openReportModal = (type) => {
     currentReportType = type;
-    document.getElementById('repTitle').innerText = type === 'essam' ? 'تقرير مصروفات عصام' : 'تقرير توريد أمازون';
+    document.getElementById('repTitle').innerText = type === 'essam' ? 'تقرير مصروفات عصام' : 'تقرير توريدات أمازون';
     document.getElementById('repFrom').value = "";
     document.getElementById('repTo').value = new Date().toISOString().split('T')[0];
     document.getElementById('reportModal').classList.add('active');
@@ -141,14 +139,13 @@ document.getElementById('recordForm').onsubmit = async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
     const originalBtn = btn.innerText;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ والرفع...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
     btn.disabled = true;
 
     const idx = document.getElementById('recordIndex').value;
     const fileInput = document.getElementById('invoiceFile');
     let invoiceUrl = document.getElementById('invoiceUrl').value;
 
-    // Handle File Upload to GitHub
     if (fileInput.files.length > 0) {
         const file = fileInput.files[0];
         const reader = new FileReader();
@@ -156,14 +153,9 @@ document.getElementById('recordForm').onsubmit = async (e) => {
             reader.onload = async () => {
                 const base64Content = reader.result.split(',')[1];
                 const extension = file.name.split('.').pop();
-                const path = `Invoices/Invoice_${Date.now()}.${extension}`;
+                const path = `Invoices/Inv_${Date.now()}.${extension}`;
                 const success = await pushFileToGitHub(base64Content, path);
-                if (success) {
-                    resolve(`https://github.com/${GITHUB_CONFIG.repo}/blob/${GITHUB_CONFIG.branch}/${path}?raw=true`);
-                } else {
-                    alert('فشل رفع الفاتورة للسحابة');
-                    resolve("");
-                }
+                resolve(success ? `https://github.com/${GITHUB_CONFIG.repo}/blob/${GITHUB_CONFIG.branch}/${path}?raw=true` : "");
             };
             reader.readAsDataURL(file);
         });
@@ -184,8 +176,7 @@ document.getElementById('recordForm').onsubmit = async (e) => {
 
     if (idx === "") records.push(data); else records[idx] = data;
     recalculateAll(); renderAll(); closeAddModal();
-    btn.innerText = originalBtn;
-    btn.disabled = false;
+    btn.innerText = originalBtn; btn.disabled = false;
 };
 
 window.editRecord = (idx) => {
@@ -195,7 +186,7 @@ window.editRecord = (idx) => {
     document.getElementById('recordModal').classList.add('active');
 };
 
-window.deleteRecord = (idx) => { if(confirm('هل أنت متأكد من الحذف؟')){ records.splice(idx,1); recalculateAll(); renderAll(); } };
+window.deleteRecord = (idx) => { if(confirm('حذف؟')){ records.splice(idx,1); recalculateAll(); renderAll(); } };
 
 // --- GITHUB SYNC ---
 document.getElementById('btnSyncGithub').onclick = async () => {
@@ -204,28 +195,18 @@ document.getElementById('btnSyncGithub').onclick = async () => {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري الحفظ...</span>';
     let csv = "sep=;\nDate;Collection;Supply;Net\n";
     records.forEach(r => csv += `${r.date};${r.collection};${r.supply};${r.collection-r.supply}\n`);
-    const filename = `Supply_Reports/Report_${new Date().toISOString().split('T')[0]}.csv`;
+    const filename = `Supply_Reports/Rpt_${Date.now()}.csv`;
     const success = await pushFileToGitHub(btoa(unescape(encodeURIComponent(csv))), filename);
-    if (success) {
-        btn.innerHTML = '<i class="fas fa-check"></i> <span>تم الحفظ</span>';
-        setTimeout(() => btn.innerHTML = originalContent, 2000);
-    } else {
-        alert('فشل الاتصال بـ GitHub. يرجى التحقق من التوكن.');
-        btn.innerHTML = originalContent;
-    }
+    btn.innerHTML = success ? '<i class="fas fa-check"></i> تم بنجاح' : 'فشل!';
+    setTimeout(() => btn.innerHTML = originalContent, 2000);
 };
 
 async function pushFileToGitHub(base64Content, path) {
     try {
-        const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${path}`;
-        const response = await fetch(url, {
+        const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${path}`, {
             method: 'PUT',
             headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                message: `Upload File ${path}`,
-                content: base64Content,
-                branch: GITHUB_CONFIG.branch
-            })
+            body: JSON.stringify({ message: `Sync ${path}`, content: base64Content, branch: GITHUB_CONFIG.branch })
         });
         return response.ok;
     } catch (e) { return false; }
@@ -238,26 +219,21 @@ window.exportReport = async (format) => {
     const filtered = records.filter(r => (!from || r.date >= from) && (!to || r.date <= to));
     const printContainer = document.getElementById('printTemplate');
     if (format === 'pdf') {
-        let tableRows = '';
-        let totalVal = 0;
-        let reportTitle = currentReportType === 'essam' ? 'تقرير مصروفات عصام التفصيلي' : 'تقرير توريدات أمازون';
-        let tableHeaders = currentReportType === 'essam' ? '<tr><th>التاريخ</th><th>المبلغ</th></tr>' : '<tr><th>التاريخ</th><th>التحصيل</th><th>التوريد</th><th>الصافي</th></tr>';
+        let rows = ''; let total = 0;
         filtered.forEach(r => {
             if (currentReportType === 'essam' && r.essam > 0) {
-                tableRows += `<tr><td>${r.date}</td><td class="num">${formatNumber(r.essam)}</td></tr>`;
-                totalVal += r.essam;
+                rows += `<tr><td>${r.date}</td><td class="num text-end">${formatNumber(r.essam)}</td></tr>`;
+                total += r.essam;
             } else if (currentReportType !== 'essam') {
-                tableRows += `<tr><td>${r.date}</td><td class="num">${formatNumber(r.collection)}</td><td class="num">${formatNumber(r.supply)}</td><td class="num">${formatNumber(r.collection-r.supply)}</td></tr>`;
+                rows += `<tr><td>${r.date}</td><td class="num text-end">${formatNumber(r.collection)}</td><td class="num text-end">${formatNumber(r.supply)}</td><td class="num text-end">${formatNumber(r.collection-r.supply)}</td></tr>`;
             }
         });
-        printContainer.innerHTML = `<div class="print-header"><h1>Financial OS</h1><h2>${reportTitle}</h2></div><table class="print-table"><thead>${tableHeaders}</thead><tbody>${tableRows}</tbody></table>`;
-        closeReportModal();
-        setTimeout(() => { window.print(); printContainer.innerHTML = ''; }, 500);
+        printContainer.innerHTML = `<div class="print-header"><h1>Financial OS</h1><h2>${currentReportType}</h2></div><table class="print-table"><tbody>${rows}</tbody></table>`;
+        closeReportModal(); setTimeout(() => { window.print(); printContainer.innerHTML = ''; }, 500);
     } else {
         let csv = "sep=;\nDate;Collection;Supply;Net\n";
         filtered.forEach(r => csv += `${r.date};${r.collection};${r.supply};${r.collection-r.supply}\n`);
-        const blob = new Blob(["\uFEFF"+csv], {type:'text/csv;charset=utf-8;'});
-        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${currentReportType}_report.csv`; a.click();
+        const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\uFEFF"+csv], {type:'text/csv;charset=utf-8;'})); a.download = `export.csv`; a.click();
         closeReportModal();
     }
 };
