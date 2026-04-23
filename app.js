@@ -62,13 +62,14 @@ function renderAll() {
 
     list.innerHTML = filtered.map((r) => {
         const idx = records.indexOf(r);
+        const d = new Date(r.date);
+        const dateShort = `${d.getDate()}-${d.getMonth() + 1}`;
         const invoiceLink = r.invoiceUrl ? `<a href="${r.invoiceUrl}" target="_blank" class="btn-icon" title="الفاتورة"><i class="fas fa-paperclip"></i></a>` : '';
         return `
             <tr>
-                <td><strong>${r.date}</strong></td>
+                <td style="white-space:nowrap"><strong>${dateShort}</strong></td>
                 <td class="val pos">${formatNumber(r.collection)}</td>
                 <td class="val neg">${formatNumber(r.supply)}</td>
-                <td class="val">${formatNumber(r.collection-r.supply)}</td>
                 <td class="val">${formatNumber(r.instaShop)}</td>
                 <td class="val">${formatNumber(r.cash)}</td>
                 <td class="val">${formatNumber(r.purchases)}</td>
