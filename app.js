@@ -1,4 +1,4 @@
-// --- ENTERPRISE CORE ENGINE ---
+// --- PERFECTIONIST CORE ENGINE ---
 const INITIAL_DATA = [
     { date: "2026-04-01", collection: 12160, cash: 2170, instaShop: 1685, purchases: 364, expenses: 250, essam: 150, actualAmount: 11545, supply: 0 },
     { date: "2026-04-02", collection: 5370, supply: 15600, cash: 740, instaShop: 0, purchases: 0, expenses: 100, essam: 150, actualAmount: 325 },
@@ -26,8 +26,9 @@ const INITIAL_DATA = [
 
 let records = JSON.parse(localStorage.getItem('financial_records')) || INITIAL_DATA;
 let currentReportType = '';
+let deleteIndex = null;
 
-// --- DOM INIT ---
+// --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     recalculateAll();
@@ -63,17 +64,16 @@ function renderAll() {
 
     list.innerHTML = filtered.map((r) => {
         const idx = records.indexOf(r);
-        const net = r.collection - r.supply;
         return `
             <tr>
                 <td><strong>${r.date}</strong><br><small>${new Date(r.date).toLocaleDateString('ar-EG',{weekday:'short'})}</small></td>
                 <td class="val" style="color:var(--success)">${formatNumber(r.collection)}</td>
                 <td class="val" style="color:var(--danger)">${formatNumber(r.supply)}</td>
-                <td class="val">${formatNumber(net)}</td>
+                <td class="val">${formatNumber(r.collection-r.supply)}</td>
                 <td><span class="status-tag ${r.diff >= 0 ? 'pos' : 'neg'}">${r.diff >= 0 ? 'مطابق' : 'عجز'}</span></td>
                 <td class="actions">
-                    <button onclick="editRecord(${idx})" class="btn-icon"><i class="fas fa-edit"></i></button>
-                    <button onclick="deleteRecord(${idx})" class="btn-icon delete"><i class="fas fa-trash"></i></button>
+                    <button onclick="editRecord(${idx})" class="btn-icon" title="تعديل"><i class="fas fa-edit"></i></button>
+                    <button onclick="deleteRecord(${idx})" class="btn-icon delete" title="حذف"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>
         `;
@@ -92,7 +92,7 @@ function recalculateAll() {
     localStorage.setItem('financial_records', JSON.stringify(records));
 }
 
-// --- COMMANDER ACTIONS ---
+// --- MODAL CONTROLS ---
 window.openAddModal = () => {
     document.getElementById('recordForm').reset();
     document.getElementById('recordIndex').value = "";
@@ -102,6 +102,18 @@ window.openAddModal = () => {
 };
 window.closeAddModal = () => document.getElementById('recordModal').classList.remove('active');
 
+window.openReportModal = (type) => {
+    currentReportType = type;
+    document.getElementById('repTitle').innerText = type === 'essam' ? 'إعداد تقرير مصروفات عصام' : 'إعداد تقرير توريد أمازون';
+    document.getElementById('repFrom').value = "";
+    document.getElementById('repTo').value = new Date().toISOString().split('T')[0];
+    document.getElementById('reportModal').classList.add('active');
+};
+window.closeReportModal = () => document.getElementById('reportModal').classList.remove('active');
+
+window.closeConfirmModal = () => document.getElementById('confirmModal').classList.remove('active');
+
+// --- ACTIONS ---
 document.getElementById('recordForm').onsubmit = async (e) => {
     e.preventDefault();
     const idx = document.getElementById('recordIndex').value;
@@ -119,10 +131,31 @@ document.getElementById('recordForm').onsubmit = async (e) => {
     };
     if (idx === "") records.push(data); else records[idx] = data;
     recalculateAll(); renderAll(); closeAddModal();
-    showToast("تم حفظ السجل بنجاح", "success");
+    showToast("تم الحفظ بنجاح", "success");
 };
 
-// --- GITHUB UPLOAD PIPELINE ---
+window.editRecord = (idx) => {
+    const r = records[idx];
+    document.getElementById('recordIndex').value = idx;
+    const fields = ['date', 'collection', 'instaShop', 'supply', 'cash', 'purchases', 'expenses', 'essam', 'actualAmount', 'invoiceUrl'];
+    fields.forEach(f => { if (document.getElementById(f)) document.getElementById(f).value = r[f] || (f === 'date' ? "" : 0); });
+    document.getElementById('recordModal').classList.add('active');
+};
+
+window.deleteRecord = (idx) => {
+    deleteIndex = idx;
+    document.getElementById('confirmModal').classList.add('active');
+};
+
+document.getElementById('confirmBtn').onclick = () => {
+    if (deleteIndex !== null) {
+        records.splice(deleteIndex, 1);
+        recalculateAll(); renderAll(); closeConfirmModal();
+        showToast("تم حذف السجل نهائياً", "success");
+    }
+};
+
+// --- GITHUB PIPELINE ---
 const uploadZone = document.getElementById('uploadZone');
 uploadZone.addEventListener('click', () => document.getElementById('invoiceFile').click());
 document.getElementById('invoiceFile').addEventListener('change', (e) => handleFileUpload(e.target.files[0]));
@@ -130,8 +163,7 @@ document.getElementById('invoiceFile').addEventListener('change', (e) => handleF
 async function handleFileUpload(file) {
     if (!file) return;
     const status = document.getElementById('uploadStatus');
-    status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع للسحابة...';
-    
+    status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع...';
     const reader = new FileReader();
     reader.onload = async () => {
         const base64 = reader.result.split(',')[1];
@@ -139,11 +171,11 @@ async function handleFileUpload(file) {
         const success = await pushToGitHub(base64, path);
         if (success) {
             document.getElementById('invoiceUrl').value = `https://github.com/${GITHUB_CONFIG.repo}/blob/${GITHUB_CONFIG.branch}/${path}?raw=true`;
-            status.innerHTML = '<i class="fas fa-check-circle" style="color:var(--success)"></i> تم الرفع بنجاح';
-            showToast("تمت أرشفة الفاتورة سحابياً", "success");
+            status.innerHTML = '<i class="fas fa-check-circle" style="color:var(--success)"></i> تم الرفع';
+            showToast("تمت الأرشفة السحابية", "success");
         } else {
             status.innerHTML = '<i class="fas fa-times-circle" style="color:var(--danger)"></i> فشل الرفع';
-            showToast("خطأ في الاتصال بالسحابة", "error");
+            showToast("خطأ في المزامنة", "error");
         }
     };
     reader.readAsDataURL(file);
@@ -153,86 +185,60 @@ async function pushToGitHub(content, path) {
     try {
         const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${path}`, {
             method: 'PUT',
-            headers: { 
-                'Authorization': `token ${GITHUB_CONFIG.token}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json' 
-            },
+            headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: `Upload ${path}`, content, branch: GITHUB_CONFIG.branch })
         });
         return response.ok;
     } catch (e) { return false; }
 }
 
-// --- REPORTING (PRINT) ---
-window.openReportModal = (type) => {
-    currentReportType = type;
-    const from = prompt("تاريخ البداية (YYYY-MM-DD):", "");
-    const to = prompt("تاريخ النهاية (YYYY-MM-DD):", "");
-    if (!from || !to) return;
-    generateProfessionalReport(from, to);
+// --- SYNC ---
+document.getElementById('btnSyncGithub').onclick = async () => {
+    const btn = document.getElementById('btnSyncGithub');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    let csv = "sep=;\nDate;Collection;Supply;Net\n";
+    records.forEach(r => csv += `${r.date};${r.collection};${r.supply};${r.collection-r.supply}\n`);
+    const success = await pushToGitHub(btoa(unescape(encodeURIComponent(csv))), `Supply_Reports/Rpt_${Date.now()}.csv`);
+    btn.innerHTML = success ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>';
+    showToast(success ? "تمت المزامنة" : "فشل المزامنة", success ? "success" : "error");
+    setTimeout(() => btn.innerHTML = orig, 2000);
 };
 
-function generateProfessionalReport(from, to) {
-    const filtered = records.filter(r => r.date >= from && r.date <= to);
-    const printContainer = document.getElementById('printTemplate');
-    let rows = "";
-    let tColl = 0, tSupp = 0;
-    filtered.forEach(r => {
-        rows += `<tr><td>${r.date}</td><td class="val">${formatNumber(r.collection)}</td><td class="val">${formatNumber(r.supply)}</td><td class="val">${formatNumber(r.collection-r.supply)}</td></tr>`;
-        tColl += r.collection; tSupp += r.supply;
-    });
+// --- EXPORT ---
+window.exportReport = (format) => {
+    const from = document.getElementById('repFrom').value;
+    const to = document.getElementById('repTo').value;
+    if (!from || !to) { showToast("يرجى تحديد التاريخ", "error"); return; }
     
-    printContainer.innerHTML = `
-        <div style="text-align:center; margin-bottom:30px;">
-            <h1>تقرير العمليات المالية</h1>
-            <p>الفترة من ${from} إلى ${to}</p>
-        </div>
-        <table class="data-table">
-            <thead><tr><th>التاريخ</th><th>التحصيل</th><th>التوريد</th><th>الصافي</th></tr></thead>
-            <tbody>${rows}</tbody>
-            <tfoot>
-                <tr style="background:#eee; font-weight:bold;">
-                    <td>الإجماليات</td>
-                    <td>${formatNumber(tColl)}</td>
-                    <td>${formatNumber(tSupp)}</td>
-                    <td>${formatNumber(tColl-tSupp)}</td>
-                </tr>
-            </tfoot>
-        </table>
-    `;
-    window.print();
-}
+    const filtered = records.filter(r => r.date >= from && r.date <= to);
+    if (format === 'pdf') {
+        const printContainer = document.getElementById('printTemplate');
+        let rows = ""; let tColl = 0, tSupp = 0;
+        filtered.forEach(r => {
+            rows += `<tr><td>${r.date}</td><td class="val">${formatNumber(r.collection)}</td><td class="val">${formatNumber(r.supply)}</td><td class="val">${formatNumber(r.collection-r.supply)}</td></tr>`;
+            tColl += r.collection; tSupp += r.supply;
+        });
+        printContainer.innerHTML = `
+            <div style="text-align:center; margin-bottom:30px;"><h1>تقرير العمليات المالية</h1><p>من ${from} إلى ${to}</p></div>
+            <table class="data-table">
+                <thead><tr><th>التاريخ</th><th>التحصيل</th><th>التوريد</th><th>الصافي</th></tr></thead>
+                <tbody>${rows}</tbody>
+                <tfoot><tr style="background:#eee; font-weight:bold;"><td>الإجماليات</td><td>${formatNumber(tColl)}</td><td>${formatNumber(tSupp)}</td><td>${formatNumber(tColl-tSupp)}</td></tr></tfoot>
+            </table>
+        `;
+        closeReportModal(); setTimeout(() => { window.print(); printContainer.innerHTML = ''; }, 500);
+    } else {
+        let csv = "sep=;\nDate;Collection;Supply;Net\n";
+        filtered.forEach(r => csv += `${r.date};${r.collection};${r.supply};${r.collection-r.supply}\n`);
+        const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\uFEFF"+csv], {type:'text/csv;charset=utf-8;'})); a.download = `report_${Date.now()}.csv`; a.click();
+        closeReportModal();
+    }
+};
 
 // --- UTILS ---
 function formatNumber(n) { return Number(n).toLocaleString('en-US', {minimumFractionDigits:2}); }
-function showToast(msg, type) {
-    const container = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = `toast ${type === 'success' ? 'bg-success' : 'bg-danger'}`;
-    toast.innerText = msg;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
 function setupCoreListeners() {
     document.getElementById('searchTerm').oninput = renderAll;
     document.getElementById('sortBy').onchange = renderAll;
 }
-window.editRecord = (idx) => {
-    const r = records[idx];
-    document.getElementById('recordIndex').value = idx;
-    const fields = ['date', 'collection', 'instaShop', 'supply', 'cash', 'purchases', 'expenses', 'essam', 'actualAmount', 'invoiceUrl'];
-    fields.forEach(f => {
-        if (document.getElementById(f)) document.getElementById(f).value = r[f] || (f === 'date' ? "" : 0);
-    });
-    document.getElementById('recordModal').classList.add('active');
-};
-
-window.deleteRecord = (idx) => { 
-    if(confirm('هل أنت متأكد من حذف هذا السجل؟')){ 
-        records.splice(idx,1); 
-        recalculateAll(); 
-        renderAll(); 
-        showToast("تم الحذف", "success");
-    } 
-};

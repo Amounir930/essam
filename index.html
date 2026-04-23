@@ -89,30 +89,32 @@
         <div class="modal-card">
             <div class="modal-header">
                 <h3>إدارة البيانات المالية</h3>
-                <button onclick="closeAddModal()">&times;</button>
+                <button class="close-btn" onclick="closeAddModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
             </div>
             <form id="recordForm" class="modal-form">
                 <input type="hidden" id="recordIndex">
                 <div class="grid-2">
-                    <div class="field"><label>التاريخ</label><input type="date" id="date" required></div>
-                    <div class="field"><label>الفعلي بالخزنة</label><input type="number" id="actualAmount" value="0"></div>
+                    <div class="field"><label><i class="fas fa-calendar-day"></i> التاريخ</label><input type="date" id="date" required></div>
+                    <div class="field"><label><i class="fas fa-vault"></i> الفعلي بالخزنة</label><input type="number" id="actualAmount" value="0"></div>
                 </div>
                 <div class="grid-2">
-                    <div class="field"><label>التحصيل (+)</label><input type="number" id="collection" value="0"></div>
-                    <div class="field"><label>انستا (+)</label><input type="number" id="instaShop" value="0"></div>
+                    <div class="field"><label><i class="fas fa-plus"></i> التحصيل</label><input type="number" id="collection" value="0"></div>
+                    <div class="field"><label><i class="fas fa-plus"></i> انستا</label><input type="number" id="instaShop" value="0"></div>
                 </div>
                 <div class="grid-2">
-                    <div class="field"><label>التوريد (-)</label><input type="number" id="supply" value="0"></div>
-                    <div class="field"><label>الكاش (-)</label><input type="number" id="cash" value="0"></div>
+                    <div class="field"><label><i class="fas fa-minus"></i> التوريد</label><input type="number" id="supply" value="0"></div>
+                    <div class="field"><label><i class="fas fa-minus"></i> الكاش</label><input type="number" id="cash" value="0"></div>
                 </div>
                 <div class="grid-2">
-                    <div class="field"><label>المشتريات (-)</label><input type="number" id="purchases" value="0"></div>
-                    <div class="field"><label>مصروف المحل (-)</label><input type="number" id="expenses" value="0"></div>
+                    <div class="field"><label><i class="fas fa-minus"></i> المشتريات</label><input type="number" id="purchases" value="0"></div>
+                    <div class="field"><label><i class="fas fa-minus"></i> مصروف المحل</label><input type="number" id="expenses" value="0"></div>
                 </div>
-                <div class="field full"><label>مصروف عصام (-)</label><input type="number" id="essam" value="0"></div>
+                <div class="field full"><label><i class="fas fa-user-tag"></i> مصروف عصام</label><input type="number" id="essam" value="0"></div>
                 
                 <div class="field full">
-                    <label>أرشفة الفاتورة</label>
+                    <label><i class="fas fa-paperclip"></i> أرشفة الفاتورة</label>
                     <div class="upload-zone" id="uploadZone">
                         <i class="fas fa-file-arrow-up"></i>
                         <span>اسحب الملف هنا أو اضغط للرفع</span>
@@ -122,10 +124,45 @@
                     <div id="uploadStatus" class="upload-status"></div>
                 </div>
                 
-                <div class="modal-footer">
+                <div class="modal-footer" style="padding-top: 20px;">
                     <button type="submit" class="btn-primary-full">تأكيد وحفظ السجل</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Report Modal -->
+    <div id="reportModal" class="modal-overlay">
+        <div class="modal-card" style="width: 400px;">
+            <div class="modal-header">
+                <h3 id="repTitle">إعداد التقرير</h3>
+                <button class="close-btn" onclick="closeReportModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="modal-form">
+                <div class="field" style="margin-bottom: 16px;"><label>من تاريخ</label><input type="date" id="repFrom"></div>
+                <div class="field" style="margin-bottom: 24px;"><label>إلى تاريخ</label><input type="date" id="repTo"></div>
+                <div class="grid-2">
+                    <button onclick="exportReport('excel')" class="btn-sync" style="justify-content: center;"><i class="fas fa-file-excel"></i> Excel</button>
+                    <button onclick="exportReport('pdf')" class="btn-primary" style="justify-content: center;"><i class="fas fa-file-pdf"></i> PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-card" style="width: 350px;">
+            <div class="modal-form" style="text-align: center;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--danger); margin-bottom: 16px;"></i>
+                <h3 style="margin-bottom: 8px;">تأكيد الحذف</h3>
+                <p style="color: var(--text-med); margin-bottom: 24px;">هل أنت متأكد من حذف هذا السجل نهائياً؟ لا يمكن التراجع عن هذا الإجراء.</p>
+                <div class="grid-2">
+                    <button onclick="closeConfirmModal()" class="btn-sync">إلغاء</button>
+                    <button id="confirmBtn" class="btn-primary" style="background: var(--danger);">حذف السجل</button>
+                </div>
+            </div>
         </div>
     </div>
 
