@@ -2,196 +2,165 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>نظام إدارة عصام | Essam OS</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Essam Financial OS | الرئيسية</title>
+    <!-- Modular CSS -->
+    <link rel="stylesheet" href="css/vars.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/modals.css">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1a1c2c">
 </head>
 <body>
     <div id="app">
-        <!-- Header -->
-        <header>
-            <div class="logo">
-                <i class="fas fa-wallet"></i>
-                <h1>Essam OS</h1>
+        <!-- Main Header -->
+        <header class="main-header">
+            <div class="header-top">
+                <h1><i class="fas fa-wallet"></i> نظام عصام المالي</h1>
+                <button class="btn-action" id="navSettings"><i class="fas fa-cog"></i></button>
             </div>
-            <div class="date-display" id="currentDate"></div>
+
+            <!-- Financial Summary -->
+            <div class="f-summary-grid">
+                <div class="f-card-premium income">
+                    <span class="f-label">إجمالي التحصيل</span>
+                    <span class="f-value" id="fTotalCollection">0.00</span>
+                </div>
+                <div class="f-card-premium supply">
+                    <span class="f-label">إجمالي التوريد</span>
+                    <span class="f-value" id="fTotalSupply">0.00</span>
+                </div>
+                <div class="f-card-premium amazon">
+                    <span class="f-label">الصافي المعلق</span>
+                    <span class="f-value" id="fTotalAmazon">0.00</span>
+                </div>
+            </div>
         </header>
 
-        <!-- Main Dashboard -->
-        <main>
-            <section class="summary-cards">
-                <div class="card balance-card">
-                    <span class="label">مبلغ الخزنة الحالي</span>
-                    <span class="value" id="totalBalance">0.00</span>
-                    <span class="currency">ج.م</span>
-                </div>
-                <div class="mini-cards">
-                    <div class="mini-card income">
-                        <i class="fas fa-arrow-down"></i>
-                        <div class="info">
-                            <span class="label">المبلغ الفعلي</span>
-                            <span class="value" id="totalActual">0.00</span>
-                        </div>
-                    </div>
-                    <div class="mini-card deficit" id="diffCard">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <div class="info">
-                            <span class="label">العجز / الزيادة</span>
-                            <span class="value" id="totalDiff">0.00</span>
-                        </div>
-                    </div>
-                    <div class="mini-card income">
-                        <i class="fas fa-cash-register"></i>
-                        <div class="info">
-                            <span class="label">تحصيل اليوم</span>
-                            <span class="value" id="todayIncome">0.00</span>
-                        </div>
-                    </div>
-                    <div class="mini-card expense">
-                        <i class="fas fa-user-tag"></i>
-                        <div class="info">
-                            <span class="label">مصاريف عصام</span>
-                            <span class="value" id="todayEssam">0.00</span>
-                        </div>
-                    </div>
-                    <div class="mini-card expense">
-                        <i class="fas fa-receipt"></i>
-                        <div class="info">
-                            <span class="label">مصاريف المحل</span>
-                            <span class="value" id="todayExpense">0.00</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Actions -->
-            <section class="actions">
-                <button id="addRecordBtn" class="btn-primary">
-                    <i class="fas fa-plus"></i>
-                    إضافة سجل جديد
-                </button>
-            </section>
-
-            <div class="main-actions" style="margin-bottom: 30px;">
-                <button id="addRecordBtn" class="btn-primary">
-                    <i class="fas fa-plus"></i> إضافة سجل جديد
-                </button>
+        <!-- Intelligent Control Bar -->
+        <div class="smart-toolbar">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchTerm" placeholder="بحث سريع بالمبلغ أو التاريخ...">
             </div>
-        </main>
+            <div class="toolbar-group">
+                <select id="sortBy">
+                    <option value="date-desc">الأحدث</option>
+                    <option value="date-asc">الأقدم</option>
+                    <option value="amount-desc">الأعلى</option>
+                </select>
+            </div>
+            <div class="toolbar-actions">
+                <button class="btn-action" id="btnEssamReport"><i class="fas fa-user-tie"></i></button>
+                <button class="btn-action" id="btnAmazonReport"><i class="fas fa-truck"></i></button>
+            </div>
+        </div>
 
-        <!-- Add Record Modal -->
+        <!-- Ledger Table -->
+        <div class="ledger-header">
+            <div>التاريخ</div>
+            <div>التحصيل</div>
+            <div>التوريد</div>
+            <div>الصافي</div>
+            <div>إدارة</div>
+        </div>
+        <div class="ledger-body" id="detailedReportsList">
+            <div class="loading-state">جاري التحميل...</div>
+        </div>
+
+        <!-- Floating Add Button -->
+        <div class="fab" onclick="openAddModal()">
+            <i class="fas fa-plus"></i>
+        </div>
+
+        <!-- Modal: Add Record -->
         <div id="recordModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>إضافة سجل يوم جديد</h3>
-                    <button class="close-modal">&times;</button>
+                    <h3 id="modalTitle">إضافة سجل جديد</h3>
+                    <button class="close-modal" onclick="closeAddModal()">&times;</button>
                 </div>
-                <form id="recordForm">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>التاريخ</label>
-                            <input type="date" id="date" required>
-                        </div>
-                        <div class="form-group">
-                            <label>بداية اليوم (تلقائي)</label>
-                            <input type="number" id="startBalance" readonly>
-                        </div>
+                <form id="recordForm" class="form-grid">
+                    <input type="hidden" id="recordIndex">
+                    <div class="form-group">
+                        <label>التاريخ</label>
+                        <input type="date" id="date" required>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div class="form-group">
                             <label>التحصيل</label>
-                            <input type="number" id="collection" value="0">
+                            <input type="number" id="collection" value="0" step="0.01">
                         </div>
                         <div class="form-group">
                             <label>التوريد</label>
-                            <input type="number" id="supply" value="0">
-                            <div class="upload-container">
-                                <label for="supplyImage" class="btn-upload">
-                                    <i class="fas fa-camera"></i> رفع صورة
-                                </label>
-                                <input type="file" id="supplyImage" accept="image/*" style="display: none;">
-                                <span id="fileName" class="file-name"></span>
-                            </div>
+                            <input type="number" id="supply" value="0" step="0.01">
                         </div>
-                        <div class="form-group">
-                            <label>تحويل كاش</label>
-                            <input type="number" id="cash" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>اوردرات انستا</label>
-                            <input type="number" id="instaShop" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>المشتريات</label>
-                            <input type="number" id="purchases" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>مصروفات المحل</label>
-                            <input type="number" id="expenses" value="0">
-                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div class="form-group">
                             <label>مصروفات عصام</label>
-                            <input type="number" id="essam" value="0">
+                            <input type="number" id="essam" value="0" step="0.01">
                         </div>
                         <div class="form-group">
-                            <label>المبلغ الفعلي</label>
-                            <input type="number" id="actualAmount" value="0">
+                            <label>مصروفات محل</label>
+                            <input type="number" id="expenses" value="0" step="0.01">
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn-submit">حفظ السجل</button>
+                    <div class="form-group">
+                        <label>المبلغ الفعلي في الخزنة</label>
+                        <input type="number" id="actualAmount" value="0" step="0.01">
                     </div>
+                    <!-- Hidden legacy fields for calculation stability -->
+                    <input type="hidden" id="startBalance" value="0">
+                    <input type="hidden" id="instaShop" value="0">
+                    <input type="hidden" id="cash" value="0">
+                    <input type="hidden" id="purchases" value="0">
+                    
+                    <button type="submit" class="btn-submit">حفظ السجل</button>
                 </form>
             </div>
         </div>
 
-        <!-- Navigation Bar (Mobile Style) -->
-        <nav class="bottom-nav">
-            <a href="#" class="nav-item active">
-                <i class="fas fa-home"></i>
-                <span>الرئيسية</span>
-            </a>
-            <a href="reports.html" class="nav-item" id="navReports">
-                <i class="fas fa-chart-line"></i>
-                <span>تقارير</span>
-            </a>
-            <a href="#" class="nav-item" id="navSettings">
-                <i class="fas fa-cog"></i>
-                <span>الإعدادات</span>
-            </a>
-        </nav>
+        <!-- Modal: Export Selection -->
+        <div id="exportModal" class="modal">
+            <div class="modal-content" style="max-width: 350px;">
+                <div class="modal-header">
+                    <h3 id="exportTitle">تصدير تقرير</h3>
+                    <button class="close-modal" onclick="closeExportModal()">&times;</button>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>من تاريخ</label>
+                        <input type="date" id="expFrom">
+                    </div>
+                    <div class="form-group">
+                        <label>إلى تاريخ</label>
+                        <input type="date" id="expTo">
+                    </div>
+                    <div class="report-options">
+                        <button class="btn-report" id="btnExcelExp"><i class="fas fa-file-excel"></i> Excel</button>
+                        <button class="btn-report" id="btnPdfExp"><i class="fas fa-file-pdf"></i> PDF</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        <!-- Settings Modal -->
+        <!-- Settings Modal (Token) -->
         <div id="settingsModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>إعدادات GitHub</h3>
-                    <button class="close-modal">&times;</button>
+                    <h3>الإعدادات</h3>
+                    <button class="close-modal" onclick="document.getElementById('settingsModal').classList.remove('active')">&times;</button>
                 </div>
                 <div class="form-group">
-                    <label>GitHub Personal Access Token</label>
-                    <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx">
+                    <label>GitHub Token</label>
+                    <input type="password" id="githubToken" placeholder="أدخل التوكن هنا">
                 </div>
-                <div class="form-group">
-                    <label>Repository (Owner/Repo)</label>
-                    <input type="text" id="ghRepo" value="Amounir930/essam">
-                </div>
-                <button id="saveSettings" class="btn-submit">حفظ الإعدادات</button>
+                <button class="btn-submit" style="margin-top: 15px;" onclick="saveSettings()">حفظ الإعدادات</button>
             </div>
         </div>
     </div>
 
     <script src="app.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js');
-            });
-        }
-    </script>
 </body>
 </html>

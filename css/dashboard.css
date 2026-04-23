@@ -1,0 +1,90 @@
+/* Dashboard & Ledger Styles */
+.main-header {
+    background: #1a1c2c;
+    padding: 20px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.f-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.f-card-premium {
+    text-align: center;
+    padding: 12px;
+    background: var(--glass-bg);
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+}
+
+.f-card-premium .f-label { font-size: 0.7rem; color: var(--secondary); display: block; margin-bottom: 5px; }
+.f-card-premium .f-value { font-size: 1.2rem; font-weight: 800; }
+
+.income .f-value { color: var(--success); }
+.supply .f-value { color: var(--warning); }
+.amazon .f-value { color: var(--primary); }
+
+/* Smart Toolbar */
+.smart-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--glass-bg);
+    padding: 10px 15px;
+    margin: 15px;
+    border-radius: 10px;
+    border: 1px solid var(--glass-border);
+    position: sticky;
+    top: 10px;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+}
+
+.search-box { flex: 1; position: relative; }
+.search-box i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--secondary); }
+.search-box input { width: 100%; background: rgba(0,0,0,0.2); border: none; padding: 8px 10px 8px 30px; color: white; border-radius: 8px; }
+
+/* Ledger Strip */
+.ledger-header {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr 1fr 80px;
+    padding: 10px 20px;
+    font-size: 0.7rem;
+    color: var(--secondary);
+    text-transform: uppercase;
+}
+
+.record-strip-ledger {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr 1fr 80px;
+    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(255,255,255,0.01);
+}
+
+.l-date { display: flex; flex-direction: column; }
+.d-day { font-size: 0.6rem; color: var(--secondary); }
+.d-val { font-size: 0.85rem; font-weight: 700; color: var(--primary); }
+.l-val { font-family: monospace; font-size: 0.9rem; font-weight: 700; text-align: center; }
+.positive { color: var(--success); }
+.negative { color: var(--warning); }
+
+.strip-actions { display: flex; gap: 5px; justify-content: flex-end; }
+.btn-action { background: none; border: none; color: var(--secondary); cursor: pointer; padding: 5px; }
+.btn-action.delete:hover { color: var(--danger); }
+
+@media (max-width: 600px) {
+    .f-summary-grid { grid-template-columns: 1fr; }
+    .ledger-header { display: none; }
+    .record-strip-ledger { grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
+}

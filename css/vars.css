@@ -1,0 +1,49 @@
+:root {
+    --primary: #4facfe;
+    --primary-dark: #00f2fe;
+    --secondary: #8b8ea8;
+    --success: #00f2fe;
+    --warning: #f9d423;
+    --danger: #ff4b2b;
+    --bg-dark: #0f111a;
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --text-main: #ffffff;
+    --font-main: 'Tajawal', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: var(--font-main);
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+#app {
+    max-width: 1000px;
+    margin: 0 auto;
+    min-height: 100vh;
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-submit:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4); }
