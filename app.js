@@ -153,7 +153,11 @@ async function pushToGitHub(content, path) {
     try {
         const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${path}`, {
             method: 'PUT',
-            headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
+            headers: { 
+                'Authorization': `token ${GITHUB_CONFIG.token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json' 
+            },
             body: JSON.stringify({ message: `Upload ${path}`, content, branch: GITHUB_CONFIG.branch })
         });
         return response.ok;
@@ -214,5 +218,21 @@ function setupCoreListeners() {
     document.getElementById('searchTerm').oninput = renderAll;
     document.getElementById('sortBy').onchange = renderAll;
 }
-window.editRecord = (idx) => { /* Reuse Modal Logic */ };
-window.deleteRecord = (idx) => { if(confirm('حذف السجل؟')){ records.splice(idx,1); recalculateAll(); renderAll(); } };
+window.editRecord = (idx) => {
+    const r = records[idx];
+    document.getElementById('recordIndex').value = idx;
+    const fields = ['date', 'collection', 'instaShop', 'supply', 'cash', 'purchases', 'expenses', 'essam', 'actualAmount', 'invoiceUrl'];
+    fields.forEach(f => {
+        if (document.getElementById(f)) document.getElementById(f).value = r[f] || (f === 'date' ? "" : 0);
+    });
+    document.getElementById('recordModal').classList.add('active');
+};
+
+window.deleteRecord = (idx) => { 
+    if(confirm('هل أنت متأكد من حذف هذا السجل؟')){ 
+        records.splice(idx,1); 
+        recalculateAll(); 
+        renderAll(); 
+        showToast("تم الحذف", "success");
+    } 
+};
