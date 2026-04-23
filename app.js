@@ -82,6 +82,7 @@ function renderAll() {
         const net = r.collection - r.supply;
         const statusClass = r.diff >= 0 ? 'pos' : 'neg';
         const statusLabel = r.diff >= 0 ? 'مطابق/زيادة' : 'عجز';
+        const invoiceLink = r.invoiceUrl ? `<a href="${r.invoiceUrl}" target="_blank" class="action-btn" title="عرض الفاتورة"><i class="fas fa-paperclip"></i></a>` : '';
 
         return `
             <tr>
@@ -96,6 +97,7 @@ function renderAll() {
                     <span class="status-tag ${statusClass}">${statusLabel} (${formatNumber(Math.abs(r.diff))})</span>
                 </td>
                 <td class="text-right">
+                    ${invoiceLink}
                     <button onclick="editRecord(${idx})" class="action-btn" title="تعديل"><i class="fas fa-edit"></i></button>
                     <button onclick="deleteRecord(${idx})" class="action-btn delete" title="حذف"><i class="fas fa-trash-alt"></i></button>
                 </td>
@@ -120,6 +122,7 @@ function recalculateAll() {
 window.openAddModal = () => {
     document.getElementById('recordForm').reset();
     document.getElementById('recordIndex').value = "";
+    document.getElementById('invoiceUrl').value = "";
     document.getElementById('date').value = new Date().toISOString().split('T')[0];
     document.getElementById('recordModal').classList.add('active');
 };
@@ -134,9 +137,38 @@ window.openReportModal = (type) => {
 };
 window.closeReportModal = () => document.getElementById('reportModal').classList.remove('active');
 
-document.getElementById('recordForm').onsubmit = (e) => {
+document.getElementById('recordForm').onsubmit = async (e) => {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalBtn = btn.innerText;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ والرفع...';
+    btn.disabled = true;
+
     const idx = document.getElementById('recordIndex').value;
+    const fileInput = document.getElementById('invoiceFile');
+    let invoiceUrl = document.getElementById('invoiceUrl').value;
+
+    // Handle File Upload to GitHub
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        invoiceUrl = await new Promise((resolve) => {
+            reader.onload = async () => {
+                const base64Content = reader.result.split(',')[1];
+                const extension = file.name.split('.').pop();
+                const path = `Invoices/Invoice_${Date.now()}.${extension}`;
+                const success = await pushFileToGitHub(base64Content, path);
+                if (success) {
+                    resolve(`https://github.com/${GITHUB_CONFIG.repo}/blob/${GITHUB_CONFIG.branch}/${path}?raw=true`);
+                } else {
+                    alert('فشل رفع الفاتورة للسحابة');
+                    resolve("");
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
     const data = {
         date: document.getElementById('date').value,
         collection: parseFloat(document.getElementById('collection').value) || 0,
@@ -146,10 +178,14 @@ document.getElementById('recordForm').onsubmit = (e) => {
         purchases: parseFloat(document.getElementById('purchases').value) || 0,
         expenses: parseFloat(document.getElementById('expenses').value) || 0,
         essam: parseFloat(document.getElementById('essam').value) || 0,
-        actualAmount: parseFloat(document.getElementById('actualAmount').value) || 0
+        actualAmount: parseFloat(document.getElementById('actualAmount').value) || 0,
+        invoiceUrl: invoiceUrl
     };
+
     if (idx === "") records.push(data); else records[idx] = data;
     recalculateAll(); renderAll(); closeAddModal();
+    btn.innerText = originalBtn;
+    btn.disabled = false;
 };
 
 window.editRecord = (idx) => {
@@ -169,25 +205,25 @@ document.getElementById('btnSyncGithub').onclick = async () => {
     let csv = "sep=;\nDate;Collection;Supply;Net\n";
     records.forEach(r => csv += `${r.date};${r.collection};${r.supply};${r.collection-r.supply}\n`);
     const filename = `Supply_Reports/Report_${new Date().toISOString().split('T')[0]}.csv`;
-    const success = await pushToGitHub(csv, filename);
+    const success = await pushFileToGitHub(btoa(unescape(encodeURIComponent(csv))), filename);
     if (success) {
         btn.innerHTML = '<i class="fas fa-check"></i> <span>تم الحفظ</span>';
         setTimeout(() => btn.innerHTML = originalContent, 2000);
     } else {
-        alert('فشل الاتصال بـ GitHub');
+        alert('فشل الاتصال بـ GitHub. يرجى التحقق من التوكن.');
         btn.innerHTML = originalContent;
     }
 };
 
-async function pushToGitHub(content, path) {
+async function pushFileToGitHub(base64Content, path) {
     try {
         const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${path}`;
         const response = await fetch(url, {
             method: 'PUT',
             headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                message: `Auto-Sync Financials ${path}`,
-                content: btoa(unescape(encodeURIComponent(content))),
+                message: `Upload File ${path}`,
+                content: base64Content,
                 branch: GITHUB_CONFIG.branch
             })
         });

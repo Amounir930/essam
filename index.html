@@ -138,6 +138,13 @@
                     <div class="form-group"><label>مصروف عصام</label><input type="number" id="essam" value="0"></div>
                     <div class="form-group"><label>الفعلي بالخزنة</label><input type="number" id="actualAmount" value="0"></div>
                 </div>
+                <div class="form-row">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label><i class="fas fa-paperclip"></i> إرفاق فاتورة التوريد (صورة/PDF)</label>
+                        <input type="file" id="invoiceFile" accept="image/*,.pdf" style="padding: 8px;">
+                        <input type="hidden" id="invoiceUrl">
+                    </div>
+                </div>
                 <div class="form-footer">
                     <button type="submit" class="btn-primary full-width">حفظ البيانات</button>
                 </div>
