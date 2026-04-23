@@ -22,6 +22,8 @@ const todayEssamEl = document.getElementById('todayEssam');
 const todayExpenseEl = document.getElementById('todayExpense');
 
 const detailedReportsList = document.getElementById('detailedReportsList');
+const historyPage = document.getElementById('historyPage');
+const reportsPage = document.getElementById('reportsPage');
 
 const currentDateEl = document.getElementById('currentDate');
 const diffCard = document.getElementById('diffCard');
@@ -81,6 +83,7 @@ function updateSummary() {
 }
 
 function renderRecords() {
+    if (!recordsList) return;
     if (records.length === 0) {
         recordsList.innerHTML = '<div class="no-data">لا توجد سجلات بعد</div>';
         return;
@@ -117,6 +120,7 @@ function renderRecords() {
 }
 
 function renderDetailedReports() {
+    if (!detailedReportsList) return;
     if (records.length === 0) {
         detailedReportsList.innerHTML = '<div class="no-data">لا توجد بيانات بعد</div>';
         return;
@@ -254,24 +258,32 @@ async function uploadToGitHub(file, date) {
 
 function setupEventListeners() {
     // Navigation
-    document.getElementById('navReports').addEventListener('click', (e) => {
-        e.preventDefault();
-        togglePage('reportsPage');
-    });
+    if (document.getElementById('navReports') && !document.getElementById('navReports').hasAttribute('target')) {
+        document.getElementById('navReports').addEventListener('click', (e) => {
+            e.preventDefault();
+            togglePage('reportsPage');
+        });
+    }
 
-    document.querySelector('.nav-item.active').addEventListener('click', (e) => {
-        e.preventDefault();
-        togglePage('historyPage');
-    });
+    if (document.querySelector('.nav-item.active') && historyPage) {
+        document.querySelector('.nav-item.active').addEventListener('click', (e) => {
+            e.preventDefault();
+            togglePage('historyPage');
+        });
+    }
 
-    document.getElementById('navSettings').addEventListener('click', (e) => {
-        e.preventDefault();
-        settingsModal.classList.add('active');
-    });
+    if (document.getElementById('navSettings')) {
+        document.getElementById('navSettings').addEventListener('click', (e) => {
+            e.preventDefault();
+            settingsModal.classList.add('active');
+        });
+    }
 
     function togglePage(pageId) {
+        const p = document.getElementById(pageId);
+        if (!p) return;
         document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-        document.getElementById(pageId).style.display = 'block';
+        p.style.display = 'block';
         
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         if (pageId === 'historyPage') document.querySelector('.nav-item:first-child').classList.add('active');
