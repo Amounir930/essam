@@ -1,5 +1,6 @@
 // --- Core State ---
-let records = JSON.parse(localStorage.getItem('essam_records')) || [];
+// RESTORING DATA: Checking both possible keys to ensure no data loss
+let records = JSON.parse(localStorage.getItem('financial_records')) || JSON.parse(localStorage.getItem('essam_records')) || [];
 let githubToken = localStorage.getItem('github_token') || '';
 let currentExportType = ''; // 'essam' or 'amazon'
 
@@ -117,12 +118,13 @@ recordForm.onsubmit = (e) => {
     const data = {
         date: document.getElementById('date').value,
         collection: parseFloat(document.getElementById('collection').value) || 0,
+        instaShop: parseFloat(document.getElementById('instaShop').value) || 0,
         supply: parseFloat(document.getElementById('supply').value) || 0,
-        essam: parseFloat(document.getElementById('essam').value) || 0,
+        cash: parseFloat(document.getElementById('cash').value) || 0,
+        purchases: parseFloat(document.getElementById('purchases').value) || 0,
         expenses: parseFloat(document.getElementById('expenses').value) || 0,
-        actualAmount: parseFloat(document.getElementById('actualAmount').value) || 0,
-        // Carry over hidden fields
-        instaShop: 0, cash: 0, purchases: 0
+        essam: parseFloat(document.getElementById('essam').value) || 0,
+        actualAmount: parseFloat(document.getElementById('actualAmount').value) || 0
     };
 
     if (idx === "") records.push(data);
@@ -138,9 +140,12 @@ window.editRecord = (idx) => {
     document.getElementById('recordIndex').value = idx;
     document.getElementById('date').value = r.date;
     document.getElementById('collection').value = r.collection;
+    document.getElementById('instaShop').value = r.instaShop || 0;
     document.getElementById('supply').value = r.supply;
-    document.getElementById('essam').value = r.essam;
+    document.getElementById('cash').value = r.cash || 0;
+    document.getElementById('purchases').value = r.purchases || 0;
     document.getElementById('expenses').value = r.expenses;
+    document.getElementById('essam').value = r.essam;
     document.getElementById('actualAmount').value = r.actualAmount;
     document.getElementById('recordModal').classList.add('active');
 };
@@ -198,7 +203,10 @@ function downloadFile(content, name) {
 }
 
 // --- Utilities ---
-function save() { localStorage.setItem('essam_records', JSON.stringify(records)); }
+function save() { 
+    localStorage.setItem('financial_records', JSON.stringify(records)); 
+    localStorage.setItem('essam_records', JSON.stringify(records)); // Syncing both for safety
+}
 function formatNumber(n) { return Number(n).toLocaleString('en-US', {minimumFractionDigits:2}); }
 function setupEventListeners() {
     document.getElementById('searchTerm').oninput = renderDetailedReports;
