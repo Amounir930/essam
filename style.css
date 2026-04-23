@@ -435,6 +435,75 @@ main {
     color: var(--secondary);
 }
 
+/* Professional Filter System */
+.filter-card {
+    background: var(--glass-bg);
+    margin-bottom: 20px;
+    padding: 20px;
+    border: 1px solid var(--glass-border);
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.filter-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.f-card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 15px;
+    text-align: center;
+    border: 1px solid var(--glass-border);
+}
+
+.f-card.income { border-bottom: 3px solid var(--success); }
+.f-card.expense { border-bottom: 3px solid var(--danger); }
+.f-card.essam { border-bottom: 3px solid var(--primary); }
+
+.f-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--secondary);
+    margin-bottom: 5px;
+}
+
+.f-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* Card Enhancements */
+.record-card-pro {
+    position: relative;
+    overflow: hidden;
+}
+
+.record-card-pro::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 5px;
+    height: 100%;
+}
+
+.record-card-pro.surplus::before { background: var(--success); }
+.record-card-pro.deficit::before { background: var(--danger); }
+
+@media (max-width: 600px) {
+    .filter-summary-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Responsive */
 @media (min-width: 768px) {
     #app {

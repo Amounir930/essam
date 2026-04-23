@@ -125,12 +125,43 @@ function renderDetailedReports() {
         return;
     }
 
-    const sortedRecords = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
+    // Get filter values
+    const fromDate = document.getElementById('filterFrom')?.value;
+    const toDate = document.getElementById('filterTo')?.value;
+    const search = document.getElementById('searchTerm')?.value?.toLowerCase() || '';
+
+    // Filter records
+    const filtered = records.filter(r => {
+        const d = r.date;
+        const matchesDate = (!fromDate || d >= fromDate) && (!toDate || d <= toDate);
+        const matchesSearch = !search || 
+            d.includes(search) || 
+            String(r.collection).includes(search) || 
+            String(r.endBalance).includes(search);
+        return matchesDate && matchesSearch;
+    });
+
+    // Update Filter Summary
+    const totalColl = filtered.reduce((sum, r) => sum + r.collection, 0);
+    const totalExp = filtered.reduce((sum, r) => sum + (r.supply + r.cash + r.purchases + r.expenses), 0);
+    const totalEssam = filtered.reduce((sum, r) => sum + r.essam, 0);
+
+    if (document.getElementById('fTotalCollection')) document.getElementById('fTotalCollection').innerText = formatNumber(totalColl);
+    if (document.getElementById('fTotalExpense')) document.getElementById('fTotalExpense').innerText = formatNumber(totalExp);
+    if (document.getElementById('fTotalEssam')) document.getElementById('fTotalEssam').innerText = formatNumber(totalEssam);
+
+    if (filtered.length === 0) {
+        detailedReportsList.innerHTML = '<div class="no-data">لا توجد نتائج تطابق البحث</div>';
+        return;
+    }
+
+    const sortedRecords = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
 
     detailedReportsList.innerHTML = sortedRecords.map((r) => {
         const index = records.indexOf(r);
+        const statusClass = r.diff >= 0 ? 'surplus' : 'deficit';
         return `
-            <div class="card" style="margin-bottom: 15px; font-size: 0.9rem;">
+            <div class="card record-card-pro ${statusClass}" style="margin-bottom: 15px; font-size: 0.9rem;">
                 <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--glass-border); padding-bottom: 5px; margin-bottom: 10px;">
                     <strong>${new Date(r.date).toLocaleDateString('ar-EG', {weekday:'long', day:'2-digit', month:'2-digit'})}</strong>
                     <div class="record-actions">
@@ -139,14 +170,12 @@ function renderDetailedReports() {
                     </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                    <div>بداية: ${formatNumber(r.startBalance)}</div>
-                    <div>تحصيل: ${formatNumber(r.collection)}</div>
-                    <div>انستا: ${formatNumber(r.instaShop)}</div>
-                    <div>توريد: ${formatNumber(r.supply)}</div>
-                    <div>كاش: ${formatNumber(r.cash)}</div>
-                    <div>مشتريات: ${formatNumber(r.purchases)}</div>
-                    <div>مصاريف: ${formatNumber(r.expenses)}</div>
-                    <div>عصام: ${formatNumber(r.essam)}</div>
+                    <div><i class="fas fa-sign-in-alt" style="color:var(--success)"></i> تحصيل: ${formatNumber(r.collection)}</div>
+                    <div><i class="fas fa-shopping-cart" style="color:var(--warning)"></i> مشتريات: ${formatNumber(r.purchases)}</div>
+                    <div><i class="fas fa-truck" style="color:var(--primary)"></i> توريد: ${formatNumber(r.supply)}</div>
+                    <div><i class="fas fa-receipt" style="color:var(--danger)"></i> مصاريف: ${formatNumber(r.expenses)}</div>
+                    <div><i class="fas fa-user" style="color:var(--secondary)"></i> عصام: ${formatNumber(r.essam)}</div>
+                    <div><i class="fas fa-money-bill-wave" style="color:var(--success)"></i> كاش: ${formatNumber(r.cash)}</div>
                     <div style="grid-column: span 2; font-weight: bold; color: var(--primary); border-top: 1px solid var(--glass-border); padding-top: 5px; margin-top: 5px;">
                         الخزنة: ${formatNumber(r.endBalance)} | فعلي: ${formatNumber(r.actualAmount)} | ${r.diff >=0 ? 'زيادة' : 'عجز'}: ${formatNumber(r.diff)}
                     </div>
@@ -224,6 +253,11 @@ async function uploadToGitHub(file, date) {
 }
 
 function setupEventListeners() {
+    // Advanced Filters
+    if (document.getElementById('filterFrom')) document.getElementById('filterFrom').addEventListener('input', renderDetailedReports);
+    if (document.getElementById('filterTo')) document.getElementById('filterTo').addEventListener('input', renderDetailedReports);
+    if (document.getElementById('searchTerm')) document.getElementById('searchTerm').addEventListener('input', renderDetailedReports);
+
     if (document.getElementById('navSettings')) {
         document.getElementById('navSettings').addEventListener('click', (e) => {
             e.preventDefault();

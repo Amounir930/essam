@@ -22,6 +22,40 @@
 
         <main>
             <section class="reports">
+                <!-- Advanced Filters -->
+                <div class="card filter-card">
+                    <div class="filter-grid">
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar-alt"></i> من تاريخ</label>
+                            <input type="date" id="filterFrom">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar-alt"></i> إلى تاريخ</label>
+                            <input type="date" id="filterTo">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-search"></i> بحث سريع</label>
+                            <input type="text" id="searchTerm" placeholder="ابحث بالمبلغ أو اليوم...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Summary -->
+                <div class="filter-summary-cards" id="filterSummary">
+                    <div class="f-card income">
+                        <span class="f-label">إجمالي التحصيل</span>
+                        <span class="f-value" id="fTotalCollection">0.00</span>
+                    </div>
+                    <div class="f-card expense">
+                        <span class="f-label">إجمالي المصروفات</span>
+                        <span class="f-value" id="fTotalExpense">0.00</span>
+                    </div>
+                    <div class="f-card essam">
+                        <span class="f-label">إجمالي عصام</span>
+                        <span class="f-value" id="fTotalEssam">0.00</span>
+                    </div>
+                </div>
+
                 <div class="section-header">
                     <h2>سجل الأيام التفصيلي</h2>
                 </div>
