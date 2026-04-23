@@ -40,20 +40,30 @@
                     </div>
                 </div>
 
-                <!-- Filter Summary -->
+                <!-- Filter Summary (Amazon Focus) -->
                 <div class="filter-summary-cards" id="filterSummary">
                     <div class="f-card income">
                         <span class="f-label">إجمالي التحصيل</span>
                         <span class="f-value" id="fTotalCollection">0.00</span>
                     </div>
-                    <div class="f-card expense">
-                        <span class="f-label">إجمالي المصروفات</span>
-                        <span class="f-value" id="fTotalExpense">0.00</span>
+                    <div class="f-card supply">
+                        <span class="f-label">إجمالي التوريد</span>
+                        <span class="f-value" id="fTotalSupply">0.00</span>
                     </div>
-                    <div class="f-card essam">
-                        <span class="f-label">إجمالي عصام</span>
-                        <span class="f-value" id="fTotalEssam">0.00</span>
+                    <div class="f-card amazon">
+                        <span class="f-label">المتبقي لأمازون</span>
+                        <span class="f-value" id="fTotalAmazon">0.00</span>
                     </div>
+                </div>
+
+                <!-- Specialized Reports -->
+                <div class="report-actions-grid" style="margin-bottom: 20px;">
+                    <button class="btn-secondary" id="btnEssamReport">
+                        <i class="fas fa-user-tag"></i> تقرير مصروفات عصام
+                    </button>
+                    <button class="btn-secondary" id="btnAmazonReport">
+                        <i class="fas fa-truck-loading"></i> تقرير التحصيل والتوريد
+                    </button>
                 </div>
 
                 <div class="section-header">

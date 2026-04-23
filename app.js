@@ -125,65 +125,99 @@ function renderDetailedReports() {
         return;
     }
 
-    // Get filter values
     const fromDate = document.getElementById('filterFrom')?.value;
     const toDate = document.getElementById('filterTo')?.value;
     const search = document.getElementById('searchTerm')?.value?.toLowerCase() || '';
 
-    // Filter records
     const filtered = records.filter(r => {
         const d = r.date;
         const matchesDate = (!fromDate || d >= fromDate) && (!toDate || d <= toDate);
-        const matchesSearch = !search || 
-            d.includes(search) || 
-            String(r.collection).includes(search) || 
-            String(r.endBalance).includes(search);
+        const matchesSearch = !search || d.includes(search) || String(r.collection).includes(search);
         return matchesDate && matchesSearch;
     });
 
-    // Update Filter Summary
+    // Amazon Focus Summary
     const totalColl = filtered.reduce((sum, r) => sum + r.collection, 0);
-    const totalExp = filtered.reduce((sum, r) => sum + (r.supply + r.cash + r.purchases + r.expenses), 0);
-    const totalEssam = filtered.reduce((sum, r) => sum + r.essam, 0);
+    const totalSupply = filtered.reduce((sum, r) => sum + r.supply, 0);
+    const amazonBalance = totalColl - totalSupply; // What we have minus what we sent
 
     if (document.getElementById('fTotalCollection')) document.getElementById('fTotalCollection').innerText = formatNumber(totalColl);
-    if (document.getElementById('fTotalExpense')) document.getElementById('fTotalExpense').innerText = formatNumber(totalExp);
-    if (document.getElementById('fTotalEssam')) document.getElementById('fTotalEssam').innerText = formatNumber(totalEssam);
+    if (document.getElementById('fTotalSupply')) document.getElementById('fTotalSupply').innerText = formatNumber(totalSupply);
+    if (document.getElementById('fTotalAmazon')) {
+        document.getElementById('fTotalAmazon').innerText = formatNumber(amazonBalance);
+        document.getElementById('fTotalAmazon').parentElement.className = 'f-card amazon ' + (amazonBalance >= 0 ? 'surplus' : 'deficit');
+    }
 
     if (filtered.length === 0) {
-        detailedReportsList.innerHTML = '<div class="no-data">لا توجد نتائج تطابق البحث</div>';
+        detailedReportsList.innerHTML = '<div class="no-data">لا توجد نتائج</div>';
         return;
     }
 
     const sortedRecords = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
 
+    // Strip Layout Rendering
     detailedReportsList.innerHTML = sortedRecords.map((r) => {
         const index = records.indexOf(r);
-        const statusClass = r.diff >= 0 ? 'surplus' : 'deficit';
+        const d = new Date(r.date);
+        const dateStr = d.toLocaleDateString('ar-EG', {day:'2-digit', month:'2-digit'});
+        
         return `
-            <div class="card record-card-pro ${statusClass}" style="margin-bottom: 15px; font-size: 0.9rem;">
-                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--glass-border); padding-bottom: 5px; margin-bottom: 10px;">
-                    <strong>${new Date(r.date).toLocaleDateString('ar-EG', {weekday:'long', day:'2-digit', month:'2-digit'})}</strong>
-                    <div class="record-actions">
-                        <button class="btn-action edit" onclick="editRecord(${index})"><i class="fas fa-edit"></i> تعديل</button>
-                        <button class="btn-action delete" onclick="deleteRecord(${index})"><i class="fas fa-trash"></i> حذف</button>
-                    </div>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                    <div><i class="fas fa-sign-in-alt" style="color:var(--success)"></i> تحصيل: ${formatNumber(r.collection)}</div>
-                    <div><i class="fas fa-shopping-cart" style="color:var(--warning)"></i> مشتريات: ${formatNumber(r.purchases)}</div>
-                    <div><i class="fas fa-truck" style="color:var(--primary)"></i> توريد: ${formatNumber(r.supply)}</div>
-                    <div><i class="fas fa-receipt" style="color:var(--danger)"></i> مصاريف: ${formatNumber(r.expenses)}</div>
-                    <div><i class="fas fa-user" style="color:var(--secondary)"></i> عصام: ${formatNumber(r.essam)}</div>
-                    <div><i class="fas fa-money-bill-wave" style="color:var(--success)"></i> كاش: ${formatNumber(r.cash)}</div>
-                    <div style="grid-column: span 2; font-weight: bold; color: var(--primary); border-top: 1px solid var(--glass-border); padding-top: 5px; margin-top: 5px;">
-                        الخزنة: ${formatNumber(r.endBalance)} | فعلي: ${formatNumber(r.actualAmount)} | ${r.diff >=0 ? 'زيادة' : 'عجز'}: ${formatNumber(r.diff)}
-                    </div>
+            <div class="record-strip">
+                <div class="strip-date">${dateStr}</div>
+                <div class="strip-val"><span>التحصيل</span>${formatNumber(r.collection)}</div>
+                <div class="strip-val"><span>التوريد</span>${formatNumber(r.supply)}</div>
+                <div class="strip-val hide-mobile"><span>المتبقي</span>${formatNumber(r.collection - r.supply)}</div>
+                <div class="strip-actions">
+                    <button class="btn-action edit" onclick="editRecord(${index})"><i class="fas fa-edit"></i></button>
+                    <button class="btn-action delete" onclick="deleteRecord(${index})"><i class="fas fa-trash"></i></button>
                 </div>
             </div>
         `;
     }).join('');
 }
+
+window.generateEssamReport = function() {
+    const from = document.getElementById('filterFrom').value || 'بداية السجل';
+    const to = document.getElementById('filterTo').value || 'اليوم';
+    const filtered = records.filter(r => {
+        const d = r.date;
+        return (!document.getElementById('filterFrom').value || d >= document.getElementById('filterFrom').value) && 
+               (!document.getElementById('filterTo').value || d <= document.getElementById('filterTo').value);
+    });
+    
+    let report = `تقرير مصروفات عصام (${from} - ${to})\n\n`;
+    let total = 0;
+    filtered.forEach(r => {
+        if (r.essam > 0) {
+            report += `${r.date}: ${formatNumber(r.essam)} ج.م\n`;
+            total += r.essam;
+        }
+    });
+    report += `\nالإجمالي: ${formatNumber(total)} ج.م`;
+    alert(report);
+};
+
+window.generateAmazonReport = function() {
+    const from = document.getElementById('filterFrom').value || 'بداية السجل';
+    const to = document.getElementById('filterTo').value || 'اليوم';
+    const filtered = records.filter(r => {
+        const d = r.date;
+        return (!document.getElementById('filterFrom').value || d >= document.getElementById('filterFrom').value) && 
+               (!document.getElementById('filterTo').value || d <= document.getElementById('filterTo').value);
+    });
+
+    let report = `تقرير التحصيل والتوريد لأمازون (${from} - ${to})\n\n`;
+    let tColl = 0, tSupp = 0;
+    filtered.forEach(r => {
+        report += `${r.date} | تحصيل: ${formatNumber(r.collection)} | توريد: ${formatNumber(r.supply)}\n`;
+        tColl += r.collection;
+        tSupp += r.supply;
+    });
+    report += `\nإجمالي التحصيل: ${formatNumber(tColl)}`;
+    report += `\nإجمالي التوريد: ${formatNumber(tSupp)}`;
+    report += `\nالمتبقي لأمازون: ${formatNumber(tColl - tSupp)}`;
+    alert(report);
+};
 
 function formatNumber(num) {
     return Number(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -257,6 +291,10 @@ function setupEventListeners() {
     if (document.getElementById('filterFrom')) document.getElementById('filterFrom').addEventListener('input', renderDetailedReports);
     if (document.getElementById('filterTo')) document.getElementById('filterTo').addEventListener('input', renderDetailedReports);
     if (document.getElementById('searchTerm')) document.getElementById('searchTerm').addEventListener('input', renderDetailedReports);
+
+    // Specialized Reports
+    if (document.getElementById('btnEssamReport')) document.getElementById('btnEssamReport').addEventListener('click', window.generateEssamReport);
+    if (document.getElementById('btnAmazonReport')) document.getElementById('btnAmazonReport').addEventListener('click', window.generateAmazonReport);
 
     if (document.getElementById('navSettings')) {
         document.getElementById('navSettings').addEventListener('click', (e) => {

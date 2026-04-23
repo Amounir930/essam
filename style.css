@@ -504,6 +504,42 @@ main {
     }
 }
 
+/* High-Density Strip Layout */
+.record-strip {
+    display: grid;
+    grid-template-columns: 100px 1fr 1fr 1fr 100px;
+    align-items: center;
+    background: var(--glass-bg);
+    padding: 10px 15px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border: 1px solid var(--glass-border);
+    font-size: 0.85rem;
+    gap: 10px;
+}
+
+.strip-date { font-weight: 700; color: var(--secondary); }
+.strip-val { text-align: center; }
+.strip-val span { display: block; font-size: 0.7rem; color: #888; }
+.strip-actions { display: flex; gap: 5px; justify-content: flex-end; }
+
+.f-card.supply { border-bottom: 3px solid var(--warning); }
+.f-card.amazon { border-bottom: 3px solid var(--primary); }
+
+.report-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+@media (max-width: 768px) {
+    .record-strip {
+        grid-template-columns: 80px 1fr 1fr 60px;
+        font-size: 0.75rem;
+    }
+    .strip-val.hide-mobile { display: none; }
+}
+
 /* Responsive */
 @media (min-width: 768px) {
     #app {
