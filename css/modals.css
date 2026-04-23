@@ -1,107 +1,87 @@
-/* Modals & Popups */
+/* Professional Modal Styles */
 .modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.8);
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(4px);
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     z-index: 1000;
     opacity: 0;
     visibility: hidden;
     transition: 0.3s;
-    backdrop-filter: blur(5px);
 }
 
-.modal.active { opacity: 1; visibility: visible; }
+.modal.active {
+    opacity: 1;
+    visibility: visible;
+}
 
 .modal-content {
-    background: #1a1c2c;
-    width: 90%;
-    max-width: 400px;
-    padding: 25px;
-    border-radius: 20px;
-    border: 1px solid var(--glass-border);
-    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    width: 500px;
+    max-width: 90%;
+    padding: 0;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    transform: translateY(20px);
+    transition: 0.3s;
+}
+
+.modal.active .modal-content {
+    transform: translateY(0);
 }
 
 .modal-header {
+    padding: 20px 24px;
+    background: var(--bg-main);
+    border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
 }
 
 .close-modal {
-    background: none;
+    background: transparent;
     border: none;
-    color: var(--secondary);
     font-size: 1.5rem;
+    color: var(--text-muted);
     cursor: pointer;
 }
 
-.form-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 15px;
+.modal-body, .modern-form {
+    padding: 24px;
 }
 
-.form-group label {
-    display: block;
-    font-size: 0.8rem;
-    color: var(--secondary);
-    margin-bottom: 5px;
+.form-footer {
+    padding: 16px 24px;
+    background: var(--bg-main);
+    border-top: 1px solid var(--border);
 }
 
-.form-group input {
+.full-width {
     width: 100%;
-    padding: 10px;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid var(--glass-border);
-    border-radius: 8px;
-    color: white;
 }
 
-/* Specific Report Modal Styles */
-.report-options {
+.narrow {
+    max-width: 380px;
+}
+
+.report-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    gap: 12px;
     margin-top: 20px;
-}
-
-.btn-report {
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid var(--glass-border);
-    background: var(--glass-bg);
-    color: white;
-    font-size: 0.8rem;
-    cursor: pointer;
-    text-align: center;
-}
-
-.btn-report i { display: block; font-size: 1.2rem; margin-bottom: 5px; }
-.btn-report:hover { background: var(--primary); border-color: var(--primary); }
-
-/* Floating Action Button */
-.fab {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    background: var(--primary);
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-size: 1.5rem;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-    z-index: 500;
-    cursor: pointer;
 }

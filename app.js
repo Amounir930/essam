@@ -1,4 +1,4 @@
-// --- INITIAL DATA ---
+// --- INITIAL DATA & STATE ---
 const INITIAL_DATA = [
     { date: "2026-04-01", collection: 12160, cash: 2170, instaShop: 1685, purchases: 364, expenses: 250, essam: 150, actualAmount: 11545, supply: 0 },
     { date: "2026-04-02", collection: 5370, supply: 15600, cash: 740, instaShop: 0, purchases: 0, expenses: 100, essam: 150, actualAmount: 325 },
@@ -24,60 +24,84 @@ const INITIAL_DATA = [
     { date: "2026-04-22", collection: 9050, supply: 17000, cash: 780, instaShop: 0, purchases: 105, expenses: 0, essam: 150, actualAmount: 415 }
 ];
 
-// --- CORE STATE ---
 let records = JSON.parse(localStorage.getItem('financial_records')) || INITIAL_DATA;
-let currentReportType = ''; 
+let currentReportType = '';
 
-// --- INIT ---
+// --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     recalculateAll();
-    renderDetailedReports();
+    renderAll();
     setupEventListeners();
 });
 
-// --- RENDER ---
-let renderTimer;
-function renderDetailedReports() {
+// --- THEME ENGINE ---
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+    
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        updateThemeIcon(next);
+    });
+}
+
+function updateThemeIcon(theme) {
+    const icon = document.querySelector('#themeToggle i');
+    const text = document.querySelector('#themeToggle span');
+    if (theme === 'dark') {
+        icon.className = 'fas fa-sun';
+        text.innerText = 'الوضع النهاري';
+    } else {
+        icon.className = 'fas fa-moon';
+        text.innerText = 'الوضع الليلي';
+    }
+}
+
+// --- RENDER ENGINE ---
+function renderAll() {
     const list = document.getElementById('detailedReportsList');
-    if (!list) return;
-    clearTimeout(renderTimer);
-    renderTimer = setTimeout(() => {
-        const search = document.getElementById('searchTerm')?.value?.toLowerCase() || '';
-        const sortBy = document.getElementById('sortBy')?.value || 'date-desc';
+    const search = document.getElementById('searchTerm')?.value?.toLowerCase() || '';
+    const sortBy = document.getElementById('sortBy')?.value || 'date-desc';
 
-        let filtered = records.filter(r => r.date.includes(search) || String(r.collection).includes(search));
-        filtered.sort((a, b) => (sortBy === 'date-desc' ? new Date(b.date) - new Date(a.date) : new Date(a.date) - new Date(b.date)));
+    let filtered = records.filter(r => r.date.includes(search) || String(r.collection).includes(search));
+    filtered.sort((a, b) => (sortBy === 'date-desc' ? new Date(b.date) - new Date(a.date) : new Date(a.date) - new Date(b.date)));
 
-        const tColl = filtered.reduce((s, r) => s + r.collection, 0);
-        const tSupp = filtered.reduce((s, r) => s + r.supply, 0);
-        document.getElementById('fTotalCollection').innerText = formatNumber(tColl);
-        document.getElementById('fTotalSupply').innerText = formatNumber(tSupp);
-        document.getElementById('fTotalAmazon').innerText = formatNumber(tColl - tSupp);
+    const tColl = filtered.reduce((s, r) => s + r.collection, 0);
+    const tSupp = filtered.reduce((s, r) => s + r.supply, 0);
+    document.getElementById('fTotalCollection').innerText = formatNumber(tColl);
+    document.getElementById('fTotalSupply').innerText = formatNumber(tSupp);
+    document.getElementById('fTotalAmazon').innerText = formatNumber(tColl - tSupp);
 
-        list.innerHTML = filtered.map((r, i) => {
-            const idx = records.indexOf(r);
-            const d = new Date(r.date);
-            const pending = r.collection - r.supply;
-            return `
-                <div class="ledger-row-premium">
-                    <div class="col-date">
-                        <span class="day-name">${d.toLocaleDateString('ar-EG', {weekday:'short'})}</span>
-                        <span class="date-val">${d.toLocaleDateString('ar-EG', {day:'2-digit', month:'2-digit'})}</span>
-                    </div>
-                    <div class="col-val income">${formatNumber(r.collection)}</div>
-                    <div class="col-val expense">${formatNumber(r.supply)}</div>
-                    <div class="col-val ${pending >=0 ? 'income' : 'expense'}">${formatNumber(pending)}</div>
-                    <div class="col-val-diff ${r.diff >= 0 ? 'pos' : 'neg'}">
-                        <strong>${formatNumber(Math.abs(r.diff))}</strong>
-                    </div>
-                    <div class="col-actions">
-                        <button onclick="editRecord(${idx})" class="btn-circle-edit"><i class="fas fa-pen"></i></button>
-                        <button onclick="deleteRecord(${idx})" class="btn-circle-delete"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }, 50);
+    list.innerHTML = filtered.map((r) => {
+        const idx = records.indexOf(r);
+        const net = r.collection - r.supply;
+        const statusClass = r.diff >= 0 ? 'pos' : 'neg';
+        const statusLabel = r.diff >= 0 ? 'مطابق/زيادة' : 'عجز';
+
+        return `
+            <tr>
+                <td>
+                    <div style="font-weight:700">${r.date}</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary)">${new Date(r.date).toLocaleDateString('ar-EG', {weekday:'long'})}</div>
+                </td>
+                <td class="text-center num pos">${formatNumber(r.collection)}</td>
+                <td class="text-center num neg">${formatNumber(r.supply)}</td>
+                <td class="text-center num">${formatNumber(net)}</td>
+                <td class="text-center">
+                    <span class="status-tag ${statusClass}">${statusLabel} (${formatNumber(Math.abs(r.diff))})</span>
+                </td>
+                <td class="text-right">
+                    <button onclick="editRecord(${idx})" class="action-btn" title="تعديل"><i class="fas fa-edit"></i></button>
+                    <button onclick="deleteRecord(${idx})" class="action-btn delete" title="حذف"><i class="fas fa-trash-alt"></i></button>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 function recalculateAll() {
@@ -92,7 +116,7 @@ function recalculateAll() {
     localStorage.setItem('financial_records', JSON.stringify(records));
 }
 
-// --- MODALS ---
+// --- CORE ACTIONS ---
 window.openAddModal = () => {
     document.getElementById('recordForm').reset();
     document.getElementById('recordIndex').value = "";
@@ -103,14 +127,13 @@ window.closeAddModal = () => document.getElementById('recordModal').classList.re
 
 window.openReportModal = (type) => {
     currentReportType = type;
-    document.getElementById('repTitle').innerText = type === 'essam' ? 'Essam Report' : 'Amazon Supply';
+    document.getElementById('repTitle').innerText = type === 'essam' ? 'تقرير مصروفات عصام' : 'تقرير توريد أمازون';
     document.getElementById('repFrom').value = "";
     document.getElementById('repTo').value = new Date().toISOString().split('T')[0];
     document.getElementById('reportModal').classList.add('active');
 };
 window.closeReportModal = () => document.getElementById('reportModal').classList.remove('active');
 
-// --- ACTIONS ---
 document.getElementById('recordForm').onsubmit = (e) => {
     e.preventDefault();
     const idx = document.getElementById('recordIndex').value;
@@ -126,7 +149,7 @@ document.getElementById('recordForm').onsubmit = (e) => {
         actualAmount: parseFloat(document.getElementById('actualAmount').value) || 0
     };
     if (idx === "") records.push(data); else records[idx] = data;
-    recalculateAll(); renderDetailedReports(); closeAddModal();
+    recalculateAll(); renderAll(); closeAddModal();
 };
 
 window.editRecord = (idx) => {
@@ -136,24 +159,23 @@ window.editRecord = (idx) => {
     document.getElementById('recordModal').classList.add('active');
 };
 
-window.deleteRecord = (idx) => { if(confirm('Delete?')){ records.splice(idx,1); recalculateAll(); renderDetailedReports(); } };
+window.deleteRecord = (idx) => { if(confirm('هل أنت متأكد من الحذف؟')){ records.splice(idx,1); recalculateAll(); renderAll(); } };
 
 // --- GITHUB SYNC ---
 document.getElementById('btnSyncGithub').onclick = async () => {
     const btn = document.getElementById('btnSyncGithub');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    let csv = "sep=;\nDate;Day;Collection;Supply;Net\n";
-    records.forEach(r => {
-        csv += `${r.date};${new Date(r.date).toLocaleDateString('en-US',{weekday:'short'})};${r.collection};${r.supply};${r.collection-r.supply}\n`;
-    });
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري الحفظ...</span>';
+    let csv = "sep=;\nDate;Collection;Supply;Net\n";
+    records.forEach(r => csv += `${r.date};${r.collection};${r.supply};${r.collection-r.supply}\n`);
     const filename = `Supply_Reports/Report_${new Date().toISOString().split('T')[0]}.csv`;
     const success = await pushToGitHub(csv, filename);
     if (success) {
-        alert('تم الحفظ في GitHub!');
-        btn.innerHTML = '<i class="fas fa-check" style="color:var(--success)"></i>';
+        btn.innerHTML = '<i class="fas fa-check"></i> <span>تم الحفظ</span>';
+        setTimeout(() => btn.innerHTML = originalContent, 2000);
     } else {
-        alert('خطأ');
-        btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i>';
+        alert('فشل الاتصال بـ GitHub');
+        btn.innerHTML = originalContent;
     }
 };
 
@@ -164,7 +186,7 @@ async function pushToGitHub(content, path) {
             method: 'PUT',
             headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                message: `Update ${path}`,
+                message: `Auto-Sync Financials ${path}`,
                 content: btoa(unescape(encodeURIComponent(content))),
                 branch: GITHUB_CONFIG.branch
             })
@@ -173,73 +195,31 @@ async function pushToGitHub(content, path) {
     } catch (e) { return false; }
 }
 
-// --- EXPORT ---
+// --- EXPORT ENGINE ---
 window.exportReport = async (format) => {
     const from = document.getElementById('repFrom').value;
     const to = document.getElementById('repTo').value;
     const filtered = records.filter(r => (!from || r.date >= from) && (!to || r.date <= to));
     const printContainer = document.getElementById('printTemplate');
-
     if (format === 'pdf') {
         let tableRows = '';
         let totalVal = 0;
-        let reportTitle = '';
-        let tableHeaders = '';
-
-        if (currentReportType === 'essam') {
-            reportTitle = 'تقرير مصروفات عصام التفصيلي';
-            tableHeaders = '<tr><th>التاريخ واليوم</th><th>المبلغ المسحوب</th></tr>';
-            const data = filtered.filter(r => r.essam > 0);
-            data.forEach(r => {
-                tableRows += `<tr><td>${r.date} (${new Date(r.date).toLocaleDateString('ar-EG',{weekday:'long'})})</td><td class="num">${formatNumber(r.essam)}</td></tr>`;
+        let reportTitle = currentReportType === 'essam' ? 'تقرير مصروفات عصام التفصيلي' : 'تقرير توريدات أمازون';
+        let tableHeaders = currentReportType === 'essam' ? '<tr><th>التاريخ</th><th>المبلغ</th></tr>' : '<tr><th>التاريخ</th><th>التحصيل</th><th>التوريد</th><th>الصافي</th></tr>';
+        filtered.forEach(r => {
+            if (currentReportType === 'essam' && r.essam > 0) {
+                tableRows += `<tr><td>${r.date}</td><td class="num">${formatNumber(r.essam)}</td></tr>`;
                 totalVal += r.essam;
-            });
-            tableRows += `<tr class="print-footer-row"><td>الإجمالي الكلي</td><td class="num">${formatNumber(totalVal)}</td></tr>`;
-        } else {
-            reportTitle = 'تقرير توريدات ومطابقة حسابات أمازون';
-            tableHeaders = '<tr><th>التاريخ</th><th>التحصيل (وارد)</th><th>التوريد (منصرف)</th><th>الصافي المعلق</th></tr>';
-            let tColl = 0, tSupp = 0;
-            filtered.forEach(r => {
-                const net = r.collection - r.supply;
-                tableRows += `<tr><td>${r.date}</td><td class="num">${formatNumber(r.collection)}</td><td class="num">${formatNumber(r.supply)}</td><td class="num">${formatNumber(net)}</td></tr>`;
-                tColl += r.collection; tSupp += r.supply;
-            });
-            tableRows += `<tr class="print-footer-row"><td>الإجماليات</td><td class="num">${formatNumber(tColl)}</td><td class="num">${formatNumber(tSupp)}</td><td class="num">${formatNumber(tColl-tSupp)}</td></tr>`;
-        }
-
-        printContainer.innerHTML = `
-            <div class="print-header">
-                <h1>Essam Financial OS</h1>
-                <h2>${reportTitle}</h2>
-                <p>الفترة من: ${from || 'بداية السجل'} إلى: ${to || 'تاريخه'}</p>
-            </div>
-            <table class="print-table">
-                <thead>${tableHeaders}</thead>
-                <tbody>${tableRows}</tbody>
-            </table>
-            <div class="report-meta">
-                <span>تم الاستخراج بواسطة: Essam OS</span>
-                <span>تاريخ الاستخراج: ${new Date().toLocaleString('ar-EG')}</span>
-                <span>صفحة 1 من 1</span>
-            </div>
-        `;
-
+            } else if (currentReportType !== 'essam') {
+                tableRows += `<tr><td>${r.date}</td><td class="num">${formatNumber(r.collection)}</td><td class="num">${formatNumber(r.supply)}</td><td class="num">${formatNumber(r.collection-r.supply)}</td></tr>`;
+            }
+        });
+        printContainer.innerHTML = `<div class="print-header"><h1>Financial OS</h1><h2>${reportTitle}</h2></div><table class="print-table"><thead>${tableHeaders}</thead><tbody>${tableRows}</tbody></table>`;
         closeReportModal();
-        setTimeout(() => {
-            window.print();
-            printContainer.innerHTML = '';
-        }, 500);
-        
+        setTimeout(() => { window.print(); printContainer.innerHTML = ''; }, 500);
     } else {
-        // Excel remains English for total compatibility as requested
-        let csv = "sep=;\n";
-        if (currentReportType === 'essam') {
-            csv += "Date;Day;Amount\n";
-            filtered.filter(r => r.essam > 0).forEach(r => csv += `${r.date};${new Date(r.date).toLocaleDateString('en-US',{weekday:'short'})};${r.essam}\n`);
-        } else {
-            csv += "Date;Day;Collection;Supply;Net\n";
-            filtered.forEach(r => csv += `${r.date};${new Date(r.date).toLocaleDateString('en-US',{weekday:'short'})};${r.collection};${r.supply};${r.collection-r.supply}\n`);
-        }
+        let csv = "sep=;\nDate;Collection;Supply;Net\n";
+        filtered.forEach(r => csv += `${r.date};${r.collection};${r.supply};${r.collection-r.supply}\n`);
         const blob = new Blob(["\uFEFF"+csv], {type:'text/csv;charset=utf-8;'});
         const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${currentReportType}_report.csv`; a.click();
         closeReportModal();
@@ -248,6 +228,6 @@ window.exportReport = async (format) => {
 
 function formatNumber(n) { return Number(n).toLocaleString('en-US', {minimumFractionDigits:2}); }
 function setupEventListeners() {
-    document.getElementById('searchTerm').oninput = renderDetailedReports;
-    document.getElementById('sortBy').onchange = renderDetailedReports;
+    document.getElementById('searchTerm').oninput = renderAll;
+    document.getElementById('sortBy').onchange = renderAll;
 }
